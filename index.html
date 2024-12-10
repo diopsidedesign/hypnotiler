@@ -17,7 +17,7 @@
 
       :root { 
                        /*server sends a diff random image with each fetch*/
-        --init-image-url: url(https://picsum.photos/1000/800.jpg); 
+        --init-image-url: url(hypnotiler_fallback.jpg); 
 
         --tile-width:       240px;  
         --image-position: 0px 0px;
@@ -344,12 +344,12 @@
          max-width:calc(300px - 3rem);
       }
  
-      img#preview-image-element { 
-         height: 260px;
+      img#preview-image-element {  
          box-sizing: border-box;
          position: relative;
-         content: var(--init-image-url);   
-         width:100%; 
+         content: var(--init-image-url);    
+         width:calc(300px - 3rem);
+         height: calc(300px - 3rem); 
       }
 
       #preview-image-element.drag-ready {
