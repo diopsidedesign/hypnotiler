@@ -737,1206 +737,1206 @@
  
    <script>
 
-      const IMG_FILE_EXTENSIONS = ['jpg','jpeg','png','gif','svg','heic','webp'];
+      (function(){ 
+         
+         const IMG_FILE_EXTENSIONS = ['jpg','jpeg','png','gif','svg','heic','webp'];
 
-      function setCssProp(prop, val) {
-         requestAnimationFrame(()=> document.documentElement.style.setProperty(prop, val)) 
-      }
-
-      function readCssProp(prop) {
-         return getComputedStyle(document.documentElement).getPropertyValue(prop)
-      }
-
-      function toggleAttr(el, attr, cond) {
-         if ((cond !== undefined ? cond : !el.hasAttribute(attr)) === true) {
-            el.setAttribute(attr,'')
-         } else {
-            el.removeAttribute(attr)
-         }
-      }
-      
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      // XY - a tiny class for simplifying coordinate based tuple math
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-      const XY = (function(){
-
-         const xYproto = Object.create( null, Object.getOwnPropertyDescriptors({
-            toString()  { return `${this.x}, ${this.y}` },
-            toArr()     { return [...this] },
-            get x()     { return this.xy[0] },
-            get y()     { return this.xy[1] }, 
-            get sum()   { return this.xy[0] + this.xy[1] },
-            get sqr()   { return powr(  this.xy, readXY(2) ) },    
-            distTo(x,y) { return distTo(this.xy, readXY(x,y)) },
-            powr(x,y)   { return powr(  this.xy, readXY(x,y)) },
-            minus(x,y)  { return minus( this.xy, readXY(x,y)) },
-            divd(x,y)   { return divd(  this.xy, readXY(x,y)) },
-            min(x,y)    { return min(   this.xy, readXY(x,y)) },
-            max(x,y)    { return max(   this.xy, readXY(x,y)) },
-            * [Symbol.iterator]() {
-               yield this.xy[0]
-               yield this.xy[1]
-               return
-            }
-         })) 
-
-         function isNum (Z)        { return (typeof Z == 'number' && Number.isFinite(Z)) } 
-         function isNums(a,b)      { return (isNum(a) && isNum(b) ? [a,b] : undefined) }
-         function distTo(xy1, xy2) { return (minus(xy1, xy2).sqr.sum)**0.5 }
-         function powr  (xy1, xy2) { return XY(xy1[0]**xy2[0], xy1[1]**xy2[1]) }
-         function divd  (xy1, xy2) { return XY(xy1[0]/ xy2[0], xy1[1]/ xy2[1]) } 
-         function minus (xy1, xy2) { return XY(xy1[0]- xy2[0], xy1[1]- xy2[1]) }
-         function min   (xy1, xy2) { return XY(Math.min(xy1[0], xy2[0]), Math.min(xy1[1], xy2[1])) }
-         function max   (xy1, xy2) { return XY(Math.max(xy1[0], xy2[0]), Math.max(xy1[1], xy2[1])) }
-
-         function readXY (a,b){ 
-            return (isNums(a,b) ?? isNums(a,a) ?? isNums(a.x,a.y)
-                 ?? isNums(a.offsetWidth, a.offsetHeight) ?? isNums(a.width, a.height)
-                 ?? isNums(a[0],a[1]) ?? ([(a ?? NaN),(b ?? NaN)]))   
+         function setCssProp(prop, val) {
+            requestAnimationFrame(()=> document.documentElement.style.setProperty(prop, val)) 
          }
 
-         return function(x,y) {
-            return Object.defineProperty( Object.create(xYproto), 'xy', {
-               value: Object.seal( readXY(x,y) ),
-               enumerable: true
-            })
+         function readCssProp(prop) {
+            return getComputedStyle(document.documentElement).getPropertyValue(prop)
          }
-      })()
 
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      //
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-        
-      function rafThrottle(func, raf, data) {
-         return function (...args) {
-            data = [this, args];
-            if (raf == null)
-               raf = requestAnimationFrame(()=> { func.apply(...data); raf = null; })
+         function toggleAttr(el, attr, cond) {
+            if ((cond !== undefined ? cond : !el.hasAttribute(attr)) === true) {
+               el.setAttribute(attr,'')
+            } else {
+               el.removeAttribute(attr)
+            }
          }
-      }
+         
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // XY - a tiny class for simplifying coordinate based tuple math
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      // for more elegant click + hold/move mouse behaviors
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         const XY = (function(){
 
-      const trackPointer = (function(){
-
-         let lastPtrUp = null
-
-         const POINTER_TRACK_THRESHOLD = 6,
-               DBL_CLICK_MS = 278
-
-         return function(event, options) {    
-          
-            if (event.pointerType === 'mouse' && event.button === 2) {
-               return false   
-            }
-
-            const opts      = options.eventOptions ?? {},
-                  target    = event.composedPath ? event.composedPath()[0] : event.target,  
-                  budgeAmt  = options.budgeThreshold ?? POINTER_TRACK_THRESHOLD, 
-                  interrupt = options.interruptWhen  ?? (()=>false) 
-          
-            let origin = options.origin ?? XY(event)
-          
-            if (options.origin !== undefined && !(Object.getOwnPropertyNames(options.origin).includes('distTo'))) {
-               origin = XY(origin)  
-            }
-
-            let budged  = false,
-                lastPos = { x: event.x, y: event.y }
-            
-            if (opts.pointerdown?.stopPropagation !== false && event.cancelable) {
-               try        { event.stopPropagation() }
-               catch(err) { console.warn(err) }
-            }
-            if (opts.pointerdown?.preventDefault  !== false && event.cancelable) {
-               try        { event.preventDefault() }
-               catch(err) { console.warn(err) }
-            } 
-            if (event.pointerType === 'mouse') { 
-               target.setPointerCapture(event.pointerId) 
-            }       
-
-            const rafThrottledTrack = rafThrottle((e) => {  
-               if (options.simple === true || budged === true) { 
-                  if (options.simple === true || (options.simple !== true && !(interrupt(e) === true))) {
-                     if (options.track !== undefined) {
-                        options.track(e, { lastPos, origin })
-                     }
-                  }
-                  else { options.onInterrupt(e) }
+            const xYproto = Object.create( null, Object.getOwnPropertyDescriptors({
+               toString()  { return `${this.x}, ${this.y}` },
+               toArr()     { return [...this] },
+               get x()     { return this.xy[0] },
+               get y()     { return this.xy[1] }, 
+               get sum()   { return this.xy[0] + this.xy[1] },
+               get sqr()   { return powr(  this.xy, readXY(2) ) },    
+               distTo(x,y) { return distTo(this.xy, readXY(x,y)) },
+               powr(x,y)   { return powr(  this.xy, readXY(x,y)) },
+               minus(x,y)  { return minus( this.xy, readXY(x,y)) },
+               divd(x,y)   { return divd(  this.xy, readXY(x,y)) },
+               min(x,y)    { return min(   this.xy, readXY(x,y)) },
+               max(x,y)    { return max(   this.xy, readXY(x,y)) },
+               * [Symbol.iterator]() {
+                  yield this.xy[0]
+                  yield this.xy[1]
+                  return
                }
-               else if (budged !== true && origin.distTo(lastPos) > budgeAmt) {
-                  ;[ budged, lastPtrUp ] = [ true, null ]; 
-               }  
-            }) 
+            })) 
 
-            const track =  e => {  
-               if (opts.pointermove?.preventDefault !== false) {
-                  e.preventDefault()  
-               }
-               lastPos.x = e.x 
-               lastPos.y = e.y 
-               rafThrottledTrack(e) 
-            }  
+            function isNum (Z)        { return (typeof Z == 'number' && Number.isFinite(Z)) } 
+            function isNums(a,b)      { return (isNum(a) && isNum(b) ? [a,b] : undefined) }
+            function distTo(xy1, xy2) { return (minus(xy1, xy2).sqr.sum)**0.5 }
+            function powr  (xy1, xy2) { return XY(xy1[0]**xy2[0], xy1[1]**xy2[1]) }
+            function divd  (xy1, xy2) { return XY(xy1[0]/ xy2[0], xy1[1]/ xy2[1]) } 
+            function minus (xy1, xy2) { return XY(xy1[0]- xy2[0], xy1[1]- xy2[1]) }
+            function min   (xy1, xy2) { return XY(Math.min(xy1[0], xy2[0]), Math.min(xy1[1], xy2[1])) }
+            function max   (xy1, xy2) { return XY(Math.max(xy1[0], xy2[0]), Math.max(xy1[1], xy2[1])) }
 
-            const release = (e) => {      
-               if (lastPtrUp > 0 && (e.timeStamp - lastPtrUp) < DBL_CLICK_MS && budged !== true) { 
-                  target.dispatchEvent(new Event('double-click', { composed: true, bubbles: false })) 
-                  lastPtrUp = null   
-               } else {
-                  lastPtrUp = e.timeStamp
-               }  
-               ;['pointerup', 'contextmenu'].forEach(type => 
-                  target.removeEventListener(type, release)
-               )
-               target.removeEventListener('pointermove', track )   
-               if (options.release) {
-                  options.release(e)  
-               }
-            }     
-
-            lastPtrUp = !!lastPtrUp ? lastPtrUp : null
-            
-            if (options.start) {
-               options.start(event) 
+            function readXY (a,b){ 
+               return (isNums(a,b) ?? isNums(a,a) ?? isNums(a.x,a.y)
+                    ?? isNums(a.offsetWidth, a.offsetHeight) ?? isNums(a.width, a.height)
+                    ?? isNums(a[0],a[1]) ?? ([(a ?? NaN),(b ?? NaN)]))   
             }
+
+            return function(x,y) {
+               return Object.defineProperty( Object.create(xYproto), 'xy', {
+                  value: Object.seal( readXY(x,y) ),
+                  enumerable: true
+               })
+            }
+         })()
+
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         //
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
            
-            ;['pointerup', 'contextmenu'].forEach(type => target.addEventListener(type, release))  
-            target.addEventListener('pointermove', track) 
+         function rafThrottle(func, raf, data) {
+            return function (...args) {
+               data = [this, args];
+               if (raf == null)
+                  raf = requestAnimationFrame(()=> { func.apply(...data); raf = null; })
+            }
          }
 
-      })()
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // for more elegant click + hold/move mouse behaviors
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         const trackPointer = (function(){
 
-      class ShadowComponent extends HTMLElement {
+            let lastPtrUp = null
 
-         constructor() {
-            super()
-            this.styleSheet = new CSSStyleSheet();             
-            this.styleText = '';
-            this.attachShadow({ mode: "open" }); 
-            this.shadowRoot.adoptedStyleSheets.push(this.styleSheet) 
-         } 
-         get template() { 
-            return this.templateEl?.innerHTML
+            const POINTER_TRACK_THRESHOLD = 6,
+                  DBL_CLICK_MS = 278
+
+            return function(event, options) {    
+             
+               if (event.pointerType === 'mouse' && event.button === 2) {
+                  return false   
+               }
+
+               const opts      = options.eventOptions ?? {},
+                     target    = event.composedPath ? event.composedPath()[0] : event.target,  
+                     budgeAmt  = options.budgeThreshold ?? POINTER_TRACK_THRESHOLD, 
+                     interrupt = options.interruptWhen  ?? (()=>false) 
+             
+               let origin = options.origin ?? XY(event)
+             
+               if (options.origin !== undefined && !(Object.getOwnPropertyNames(options.origin).includes('distTo'))) {
+                  origin = XY(origin)  
+               }
+
+               let budged  = false,
+                   lastPos = { x: event.x, y: event.y }
+               
+               if (opts.pointerdown?.stopPropagation !== false && event.cancelable) {
+                  try        { event.stopPropagation() }
+                  catch(err) { console.warn(err) }
+               }
+               if (opts.pointerdown?.preventDefault  !== false && event.cancelable) {
+                  try        { event.preventDefault() }
+                  catch(err) { console.warn(err) }
+               } 
+               if (event.pointerType === 'mouse') { 
+                  target.setPointerCapture(event.pointerId) 
+               }       
+
+               const rafThrottledTrack = rafThrottle((e) => {  
+                  if (options.simple === true || budged === true) { 
+                     if (options.simple === true || (options.simple !== true && !(interrupt(e) === true))) {
+                        if (options.track !== undefined) {
+                           options.track(e, { lastPos, origin })
+                        }
+                     }
+                     else { options.onInterrupt(e) }
+                  }
+                  else if (budged !== true && origin.distTo(lastPos) > budgeAmt) {
+                     ;[ budged, lastPtrUp ] = [ true, null ]; 
+                  }  
+               }) 
+
+               const track =  e => {  
+                  if (opts.pointermove?.preventDefault !== false) {
+                     e.preventDefault()  
+                  }
+                  lastPos.x = e.x 
+                  lastPos.y = e.y 
+                  rafThrottledTrack(e) 
+               }  
+
+               const release = (e) => {      
+                  if (lastPtrUp > 0 && (e.timeStamp - lastPtrUp) < DBL_CLICK_MS && budged !== true) { 
+                     target.dispatchEvent(new Event('double-click', { composed: true, bubbles: false })) 
+                     lastPtrUp = null   
+                  } else {
+                     lastPtrUp = e.timeStamp
+                  }  
+                  ;['pointerup', 'contextmenu'].forEach(type => 
+                     target.removeEventListener(type, release)
+                  )
+                  target.removeEventListener('pointermove', track )   
+                  if (options.release) {
+                     options.release(e)  
+                  }
+               }     
+
+               lastPtrUp = !!lastPtrUp ? lastPtrUp : null
+               
+               if (options.start) {
+                  options.start(event) 
+               }
+              
+               ;['pointerup', 'contextmenu'].forEach(type => target.addEventListener(type, release))  
+               target.addEventListener('pointermove', track) 
+            }
+
+         })()
+
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+         class ShadowComponent extends HTMLElement {
+
+            constructor() {
+               super()
+               this.styleSheet = new CSSStyleSheet();             
+               this.styleText = '';
+               this.attachShadow({ mode: "open" }); 
+               this.shadowRoot.adoptedStyleSheets.push(this.styleSheet) 
+            } 
+            get template() { 
+               return this.templateEl?.innerHTML
+            }
+            set template(templateStr) {
+               if (this.template == null) {
+                  this.templateEl = document.createElement('template')
+                  this.templateEl.innerHTML = templateStr;
+                  this.shadowRoot.appendChild(this.templateEl.content.cloneNode(true))
+               }      
+            } 
+            get styles() {
+               return this.styleText
+            }
+            set styles(styleStr) {
+               this.styleText = styleStr;
+               this.styleSheet.replaceSync(styleStr)
+            }
          }
-         set template(templateStr) {
-            if (this.template == null) {
-               this.templateEl = document.createElement('template')
-               this.templateEl.innerHTML = templateStr;
-               this.shadowRoot.appendChild(this.templateEl.content.cloneNode(true))
-            }      
-         } 
-         get styles() {
-            return this.styleText
+     
+
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+      
+
+         class SimpleComponent extends HTMLElement {
+
+            static componentCount = 0;
+
+            constructor() {
+               super()           
+               SimpleComponent.componentCount+=1;
+            } 
+            get template() { 
+               return this.templateEl?.innerHTML
+            }
+            set template(templateStr) {
+               if (this.template == null) {
+                  this.templateEl = document.createElement('template')
+                  this.templateEl.innerHTML = templateStr;
+                  this.appendChild(this.templateEl.content.cloneNode(true))
+               }      
+            } 
          }
-         set styles(styleStr) {
-            this.styleText = styleStr;
-            this.styleSheet.replaceSync(styleStr)
-         }
-      }
-  
-
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-   
-
-      class SimpleComponent extends HTMLElement {
-
-         static componentCount = 0;
-
-         constructor() {
-            super()           
-            SimpleComponent.componentCount+=1;
-         } 
-         get template() { 
-            return this.templateEl?.innerHTML
-         }
-         set template(templateStr) {
-            if (this.template == null) {
-               this.templateEl = document.createElement('template')
-               this.templateEl.innerHTML = templateStr;
-               this.appendChild(this.templateEl.content.cloneNode(true))
-            }      
-         } 
-      }
 
 
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      customElements.define('value-incrementer', class extends SimpleComponent{ 
-         constructor() {
-            super();
-            this.template = `<div>  
-                  <button class="minus-button"  type="button">
-                     <svg class="minus-button" width="100%" height="100%" viewBox="0 0 64 64">
-                         <path d="M50,27L14,27C12,27 11,28 11,30L11,34C11,36 12,37 14,37L50,37C52,37 53,36 53,34L53,30C53,28 52,27 50,27Z"/>
-                     </svg>
-                  </button><button class="plus-button"  type="button">
-                     <svg class="plus-button" width="100%" height="100%" viewBox="0 0 64 64">
-                         <path d="M27,14L27,50C27,52 28,53 30,53L34,53C36,53 37,52 37,50L37,14C37,12 36,11 34,11L30,11C28,11 27,12 27,14Z"/>
-                         <path d="M50,27L14,27C12,27 11,28 11,30L11,34C11,36 12,37 14,37L50,37C52,37 53,36 53,34L53,30C53,28 52,27 50,27Z"/>
-                     </svg>  
-                  </button>${this.hasAttribute('show-reset') ? ` 
-                  <button class="reset-button"  type="button">
-                        <svg class="reset-button" viewBox="0 0 32 32">
-                           <path d="M9.2 14c1-4 4-7 8.3-7a9 9 0 0 1 0 18c-2.4 0-4.4-1-6-2.5l-3 3.5a14 14 0 0 0 9 3.5 13.5 13.5 0 0 0 0-27A13 13 0 0 0 4.6 14H0l7 8 7-8H9.2Z"/>
-                        </svg> 
-                     </button>` : ``}</div>`
-         }
-         connectedCallback() {
-            const detail = { value: 0 }
-            this.event = new CustomEvent('increment', { detail, bubbles: true, composed: true })
-            this.querySelectorAll('button').forEach(btnEl=> {
-               btnEl.addEventListener('click', e=> {
-                  detail.value = btnEl.getAttribute('class').split('-')[0];
+         customElements.define('value-incrementer', class extends SimpleComponent{ 
+            constructor() {
+               super();
+               this.template = `<div>  
+                     <button class="minus-button"  type="button">
+                        <svg class="minus-button" width="100%" height="100%" viewBox="0 0 64 64">
+                            <path d="M50,27L14,27C12,27 11,28 11,30L11,34C11,36 12,37 14,37L50,37C52,37 53,36 53,34L53,30C53,28 52,27 50,27Z"/>
+                        </svg>
+                     </button><button class="plus-button"  type="button">
+                        <svg class="plus-button" width="100%" height="100%" viewBox="0 0 64 64">
+                            <path d="M27,14L27,50C27,52 28,53 30,53L34,53C36,53 37,52 37,50L37,14C37,12 36,11 34,11L30,11C28,11 27,12 27,14Z"/>
+                            <path d="M50,27L14,27C12,27 11,28 11,30L11,34C11,36 12,37 14,37L50,37C52,37 53,36 53,34L53,30C53,28 52,27 50,27Z"/>
+                        </svg>  
+                     </button>${this.hasAttribute('show-reset') ? ` 
+                     <button class="reset-button"  type="button">
+                           <svg class="reset-button" viewBox="0 0 32 32">
+                              <path d="M9.2 14c1-4 4-7 8.3-7a9 9 0 0 1 0 18c-2.4 0-4.4-1-6-2.5l-3 3.5a14 14 0 0 0 9 3.5 13.5 13.5 0 0 0 0-27A13 13 0 0 0 4.6 14H0l7 8 7-8H9.2Z"/>
+                           </svg> 
+                        </button>` : ``}</div>`
+            }
+            connectedCallback() {
+               const detail = { value: 0 }
+               this.event = new CustomEvent('increment', { detail, bubbles: true, composed: true })
+               this.querySelectorAll('button').forEach(btnEl=> {
+                  btnEl.addEventListener('click', e=> {
+                     detail.value = btnEl.getAttribute('class').split('-')[0];
+                     this.dispatchEvent(this.event);
+                  })
+               }) 
+            }
+         })
+
+    
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+
+         customElements.define('range-input', class extends SimpleComponent{
+
+            constructor() { super()
+    
+
+               this.min = Number(this.getAttribute('min') ?? 0)
+               this.max = Number(this.getAttribute('max') ?? 100)
+               this.step = Number(this.getAttribute('step') ?? 1)
+               this.currentValue = Number(this.getAttribute('value') ?? 0)
+               this.unit = this.getAttribute('unit') ?? ''
+               this.originalValue = this.currentValue;
+
+               this.template =` 
+                  <label for="range-input"></label>
+                  <input name="range-input"
+                         type ="range" 
+                         min  ="${this.min}"
+                         max  ="${this.max}"
+                         step ="${this.step}"
+                         value="${this.currentValue}" />
+                  <span>${this.currentValue + this.unit}</span>
+                  <value-incrementer show-reset></value-incrementer>`; 
+            } 
+
+            connectedCallback() {
+    
+               this.valueDisplay = this.querySelector('span');
+               this.inputEl      = this.querySelector('input');
+
+               this.inputEl.id = this.tagName.toLowerCase() + SimpleComponent.componentCount;
+               this.querySelector('label').setAttribute('for',this.tagName.toLowerCase() + SimpleComponent.componentCount)
+
+               if (this.hasAttribute('label')) {
+                  this.querySelector('label').innerHTML = this.getAttribute('label')
+               }
+
+               const detail = { value: Number(this.getAttribute('value') ?? "0"), from: 'input' }
+
+               this.event = new CustomEvent('range-change', { composed: true, bubbles: true, detail })
+
+               const setNewVal = (val,from) => {
+                  detail.value = val;
+                  detail.from  = from;
+                  this.currentValue = val;
+                  this.inputEl.value = val;
+                  this.valueDisplay.innerHTML = val + this.unit;
+                  this.dispatchEvent(this.event);
+               }
+               this.querySelector('input').addEventListener('input', e => {  
+                  setNewVal(Number(e.originalTarget?.value ?? e.target.value), 'input') 
+               })
+               this.querySelector('value-incrementer').addEventListener('increment', e=> { 
+                  if (e.detail.value === 'reset') {
+                     setNewVal(this.originalValue, 'increment')
+                  } else {
+                     setNewVal(Math.max(this.min, Math.min(this.max, this.currentValue + (e.detail.value==='plus'? this.step : -this.step ))), 'increment')    
+                  }               
+               })
+            } 
+         })
+    
+
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+         customElements.define('fancy-checkbox', class extends SimpleComponent {
+
+            constructor() {
+               super()
+               this.template = `<input type="checkbox" name="fancy-checkbox-input"/>
+                  <svg class="checkmark-graphic" viewBox="0 0 32 32">
+                     <path d="M3 22c-1-1-.5-1.3 0-2l1-1c.5-.5 1.5-.5 2 0l5 4s1 1 2 0L26 2c.3-.5.5-.3 1 0l2 1c1 .5.5 1 0 2L14 30c-.5.5-1.5.5-2 0l-9-8Z"/>
+                  </svg>`;
+            }
+
+            connectedCallback() { 
+               const detail = { toggle: this.hasAttribute('checked') }
+               if (this.hasAttribute('checked')){
+                  this.querySelector('input').checked = true;
+                  this.removeAttribute('checked')
+               }
+               this.event = new CustomEvent('toggle-check', { detail, bubbles: true, composed: true })
+               this.querySelector('input').addEventListener('click', e=> {
+                  detail.toggle = e.target.checked
                   this.dispatchEvent(this.event);
                })
-            }) 
-         }
-      })
-
- 
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
- 
-
-      customElements.define('range-input', class extends SimpleComponent{
-
-         constructor() { super()
- 
-
-            this.min = Number(this.getAttribute('min') ?? 0)
-            this.max = Number(this.getAttribute('max') ?? 100)
-            this.step = Number(this.getAttribute('step') ?? 1)
-            this.currentValue = Number(this.getAttribute('value') ?? 0)
-            this.unit = this.getAttribute('unit') ?? ''
-            this.originalValue = this.currentValue;
-
-            this.template =` 
-               <label for="range-input"></label>
-               <input name="range-input"
-                      type ="range" 
-                      min  ="${this.min}"
-                      max  ="${this.max}"
-                      step ="${this.step}"
-                      value="${this.currentValue}" />
-               <span>${this.currentValue + this.unit}</span>
-               <value-incrementer show-reset></value-incrementer>`; 
-         } 
-
-         connectedCallback() {
- 
-            this.valueDisplay = this.querySelector('span');
-            this.inputEl      = this.querySelector('input');
-
-            this.inputEl.id = this.tagName.toLowerCase() + SimpleComponent.componentCount;
-            this.querySelector('label').setAttribute('for',this.tagName.toLowerCase() + SimpleComponent.componentCount)
-
-            if (this.hasAttribute('label')) {
-               this.querySelector('label').innerHTML = this.getAttribute('label')
             }
-
-            const detail = { value: Number(this.getAttribute('value') ?? "0"), from: 'input' }
-
-            this.event = new CustomEvent('range-change', { composed: true, bubbles: true, detail })
-
-            const setNewVal = (val,from) => {
-               detail.value = val;
-               detail.from  = from;
-               this.currentValue = val;
-               this.inputEl.value = val;
-               this.valueDisplay.innerHTML = val + this.unit;
-               this.dispatchEvent(this.event);
-            }
-            this.querySelector('input').addEventListener('input', e => {  
-               setNewVal(Number(e.originalTarget?.value ?? e.target.value), 'input') 
-            })
-            this.querySelector('value-incrementer').addEventListener('increment', e=> { 
-               if (e.detail.value === 'reset') {
-                  setNewVal(this.originalValue, 'increment')
-               } else {
-                  setNewVal(Math.max(this.min, Math.min(this.max, this.currentValue + (e.detail.value==='plus'? this.step : -this.step ))), 'increment')    
-               }               
-            })
-         } 
-      })
- 
-
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-      customElements.define('fancy-checkbox', class extends SimpleComponent {
-
-         constructor() {
-            super()
-            this.template = `<input type="checkbox" name="fancy-checkbox-input"/>
-               <svg class="checkmark-graphic" viewBox="0 0 32 32">
-                  <path d="M3 22c-1-1-.5-1.3 0-2l1-1c.5-.5 1.5-.5 2 0l5 4s1 1 2 0L26 2c.3-.5.5-.3 1 0l2 1c1 .5.5 1 0 2L14 30c-.5.5-1.5.5-2 0l-9-8Z"/>
-               </svg>`;
-         }
-
-         connectedCallback() { 
-            const detail = { toggle: this.hasAttribute('checked') }
-            if (this.hasAttribute('checked')){
-               this.querySelector('input').checked = true;
-               this.removeAttribute('checked')
-            }
-            this.event = new CustomEvent('toggle-check', { detail, bubbles: true, composed: true })
-            this.querySelector('input').addEventListener('click', e=> {
-               detail.toggle = e.target.checked
-               this.dispatchEvent(this.event);
-            })
-         }
-      })
+         })
 
 
 
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
- 
-      customElements.define('hypno-tiler', (()=> {
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+         customElements.define('hypno-tiler', (()=> {
 
-            function createTileGroupMarkup(nTiles) { 
-               let tileGroupMarkup = `<div class="tile-group">`
-               for (let i=0; i<nTiles; i++) {
-                  tileGroupMarkup += `<div class="tri"></div>`
+               function createTileGroupMarkup(nTiles) { 
+                  let tileGroupMarkup = `<div class="tile-group">`
+                  for (let i=0; i<nTiles; i++) {
+                     tileGroupMarkup += `<div class="tri"></div>`
+                  }
+                  tileGroupMarkup += `</div>`;
+                  return tileGroupMarkup
                }
-               tileGroupMarkup += `</div>`;
-               return tileGroupMarkup
-            }
-            function createTileColumnNode(nGroups) {  
-               const tmpl = document.createElement('template')
-               let txt = `<div class="tile-column">` 
-               for (let i=0; i<nGroups; i++) {
-                  txt += createTileGroupMarkup(12)
-               } 
-               txt += '</div>'
-               tmpl.innerHTML = txt
-               return tmpl.content.cloneNode(true)
-            }
-
-            return class extends ShadowComponent {
-
-               static observedAttributes = ['num-rows','num-columns'] 
-               constructor() {
-                  super()
-                  this.styles = `  
-                     :host {                         
-                        display: block;
-                        width: min-content;                     
-                        margin: 0 auto;
-                        white-space: nowrap; 
-                        transform-origin: center center;
-                     }  
-
-                     :host([reflect="6"]), :host([reflect="12"]) {
-                        --hex-width:      calc(var(--tile-width) * calc(4 / 3));
-                        --hex-halfheight: calc(calc(var(--hex-width) * cos(30deg)) / 2) ;
-                        --tri-size:       calc(var(--tile-width) * calc(2 / 3));
-                     }
-                    
-                     :host([reflect="4"]), :host([reflect="8"]) {
-                        --tri-size: calc(var(--tile-width) / 2);
-                     }
-
-                     .tile-column {  
-                        display: inline-block;
-                        position: relative;
-                     }  
-
-                     .tile-group {
-                        transform: rotateZ(0);  
-
-                        width: var(--tile-width) ;
-                     }  
-                     
-                     .tri {
-                        height: var(--tri-size);
-                        width: var(--tri-size); 
-                        position: absolute;  
-                        z-index:1;
-                     }  
-
-                     .tri:before {
-                        z-index:-1;
-                        content: "";
-                        position: absolute; 
-                        height: calc(var(--tri-size) + 50%);
-                        width:  calc(var(--tri-size) + 50%); 
-                        top: -25%;
-                        left: -25%; 
-                        background:          var(--image-url);   
-                        background-position: var(--image-position); 
-                        background-size:        var(--image-scale);
-                        transform:           var(--image-rotation); 
-                     }
-
-                     :host([reflect="4"]) { 
-                      
-                        .tile-group {     
-                           width: var(--tile-width);
-                           height: var(--tile-width);   
-                        }
-
-                        .tri {  
-                           transform-origin: bottom right;
-                           
-                           clip-path: polygon(
-                              -0.5px -0.5px,
-                              -0.5px calc(100% + 0.5px),
-                              calc(100% + 0.5px) calc(100% + 0.5px),
-                              calc(100% + 0.5px) -0.5px
-                           );
-                        }  
-
-                        .tri:nth-child(1)  { }
-                        .tri:nth-child(2)  {  transform: scaleY(-1);  }
-                        .tri:nth-child(3)  {  transform: scaleX(-1) scaleY(-1); }
-                        .tri:nth-child(4)  {  transform: scaleX(-1);  }
-                        .tri:nth-child(5), .tri:nth-child(6), .tri:nth-child(7),
-                        .tri:nth-child(8), .tri:nth-child(9), .tri:nth-child(10),
-                        .tri:nth-child(11), .tri:nth-child(12) { 
-                           display: none;
-                        }
-                     } 
-
-                     :host([reflect="6"]) { 
-                      
-                        .tile-column:nth-child(even) {  
-                           top: calc(calc(var(--hex-halfheight) * -1));  
-                        }  
-
-                        .tile-group {   
-                           height:      var(--hex-halfheight);  
-                           padding-top: var(--hex-halfheight);
-                        }
-
-                        .tri {  
-                           transform-origin: top center;
-                           clip-path: polygon(
-                              calc(50% + .5px) 0,
-                              calc(50% - .5px) 0,
-                              0px 86%,
-                              0px calc(86.6% + 1px),
-                              100% calc(86.6% + 1px),
-                              100% 86%
-                           );  
-                        }  
-
-                        .tri:nth-child(1) { }
-                        .tri:nth-child(2) {  transform: rotate(60deg) scaleX(-1);  }
-                        .tri:nth-child(3) {  transform: rotate(120deg); }
-                        .tri:nth-child(4) {  transform: rotate(180deg) scaleX(-1); }
-                        .tri:nth-child(5) {  transform: rotate(240deg); }
-                        .tri:nth-child(6) {  transform: rotate(-60deg) scaleX(-1); } 
-                        .tri:nth-child(7), .tri:nth-child(8), .tri:nth-child(9),
-                        .tri:nth-child(10), .tri:nth-child(11), .tri:nth-child(12) {
-                           display: none;
-                        } 
-                     } 
-                      
-                     :host([reflect="8"]) { 
-
-                        .tile-group {    
-                           height: var(--tile-width);   
-                        }
-
-                        .tri {  
-                           transform-origin: bottom right;
-                           clip-path: polygon(
-                              -0.5px -0.5px,
-                              calc(100% + 0.5px) -0.5px,
-                              calc(100% + 0.5px) calc(100% + 0.5px),
-                              calc(100% - 0.5px) calc(100% + 0.5px),
-                              -0.5px 0
-                           ); 
-                        } 
-
-                        .tri:nth-child(1) { }
-                        .tri:nth-child(2) { transform: translateX(0%) scaleX(-1); }
-                        .tri:nth-child(3) { transform: rotate(180deg); }
-                        .tri:nth-child(4) { transform: rotate(180deg) scaleX(-1); }
-                        .tri:nth-child(5) { transform: rotate(270deg)  ;}
-                        .tri:nth-child(6) { transform: rotate(270deg) scaleX(-1); }
-                        .tri:nth-child(7) { transform: rotate(90deg); } 
-                        .tri:nth-child(8) { transform: rotate(90deg) scaleX(-1); } 
-                        .tri:nth-child(9),  .tri:nth-child(10),
-                        .tri:nth-child(11), .tri:nth-child(12) {
-                           display: none;
-                        } 
-                     }
-
-                     :host([reflect="12"]) {  
-
-                        .tile-column:nth-child(even) {  
-                           top: calc(var(--hex-halfheight) * -1);  
-                        }  
-
-                        .tile-group {   
-                           height:      var(--hex-halfheight);  
-                           padding-top: var(--hex-halfheight);
-                        }
-
-                        .tri {  
-                           width: calc(var(--tri-size) / 2);
-                           transform-origin: top right;
-
-                           clip-path: polygon(
-                              calc(100% + 0.5px) 0,
-                              calc(100% + 0.5px) calc(86.6% + 0.5px),
-                              -0.5px calc(86.6% + 0.5px),
-                              -0.5px 86.6%, 
-                              calc(100% - 0.5px) 0
-                           );  
-                        }  
-
-                        .tri:nth-child(1)  { }
-                        .tri:nth-child(2)  {  transform: scaleX(-1); }
-                        .tri:nth-child(3)  {  transform: rotate(60deg) scaleX(-1); }
-                        .tri:nth-child(4)  {  transform: rotate(-60deg); }
-                        .tri:nth-child(5)  {  transform: rotate(60deg); } 
-                        .tri:nth-child(6)  {  transform: scaleX(-1) rotate(60deg); } 
-                        .tri:nth-child(8)  {  transform: scaleY(-1); } 
-                        .tri:nth-child(7)  {  transform: scaleY(-1) scaleX(-1); } 
-                        .tri:nth-child(9)  {  transform: scaleY(-1) rotate(60deg); } 
-                        .tri:nth-child(10) {  transform: scaleY(-1) rotate(60deg) scaleX(-1);  } 
-                        .tri:nth-child(11) {  transform: scaleY(-1) rotate(-60deg);  } 
-                        .tri:nth-child(12) {  transform: scaleY(-1) rotate(-60deg) scaleX(-1); } 
-                     }`;
-
-                  this.template = ``;
-               }
-               connectedCallback() {   
-                  for (let i=0; i<((window.innerWidth / 240)+2); i++) {
-                     this.shadowRoot.appendChild(createTileColumnNode(((window.innerHeight / 240)+2)))
-                  }  
-               }
-               createTileGroup() {
+               function createTileColumnNode(nGroups) {  
                   const tmpl = document.createElement('template')
-                  tmpl.innerHTML = createTileGroupMarkup(12)
+                  let txt = `<div class="tile-column">` 
+                  for (let i=0; i<nGroups; i++) {
+                     txt += createTileGroupMarkup(12)
+                  } 
+                  txt += '</div>'
+                  tmpl.innerHTML = txt
                   return tmpl.content.cloneNode(true)
                }
-               attributeChangedCallback(attr, oldVal, newVal) { 
-                  if (attr === 'num-rows') { 
-                     if (oldVal != null) {
-                        if (oldVal > newVal) {
-                           [...this.shadowRoot.querySelectorAll('.tile-column')].forEach(col=> {
-                              [...col.children].at(-1).remove()
-                           })
-                        } else if (newVal > oldVal) {
-                           [...this.shadowRoot.querySelectorAll('.tile-column')].forEach(col=> {
-                              col.appendChild(this.createTileGroup())
-                           }) 
+
+               return class extends ShadowComponent {
+
+                  static observedAttributes = ['num-rows','num-columns'] 
+                  constructor() {
+                     super()
+                     this.styles = `  
+                        :host {                         
+                           display: block;
+                           width: min-content;                     
+                           margin: 0 auto;
+                           white-space: nowrap; 
+                           transform-origin: center center;
+                        }  
+
+                        :host([reflect="6"]), :host([reflect="12"]) {
+                           --hex-width:      calc(var(--tile-width) * calc(4 / 3));
+                           --hex-halfheight: calc(calc(var(--hex-width) * cos(30deg)) / 2) ;
+                           --tri-size:       calc(var(--tile-width) * calc(2 / 3));
                         }
-                     } 
+                       
+                        :host([reflect="4"]), :host([reflect="8"]) {
+                           --tri-size: calc(var(--tile-width) / 2);
+                        }
+
+                        .tile-column {  
+                           display: inline-block;
+                           position: relative;
+                        }  
+
+                        .tile-group {
+                           transform: rotateZ(0);  
+
+                           width: var(--tile-width) ;
+                        }  
+                        
+                        .tri {
+                           height: var(--tri-size);
+                           width: var(--tri-size); 
+                           position: absolute;  
+                           z-index:1;
+                        }  
+
+                        .tri:before {
+                           z-index:-1;
+                           content: "";
+                           position: absolute; 
+                           height: calc(var(--tri-size) + 50%);
+                           width:  calc(var(--tri-size) + 50%); 
+                           top: -25%;
+                           left: -25%; 
+                           background:          var(--image-url);   
+                           background-position: var(--image-position); 
+                           background-size:        var(--image-scale);
+                           transform:           var(--image-rotation); 
+                        }
+
+                        :host([reflect="4"]) { 
+                         
+                           .tile-group {     
+                              width: var(--tile-width);
+                              height: var(--tile-width);   
+                           }
+
+                           .tri {  
+                              transform-origin: bottom right;
+                              
+                              clip-path: polygon(
+                                 -0.5px -0.5px,
+                                 -0.5px calc(100% + 0.5px),
+                                 calc(100% + 0.5px) calc(100% + 0.5px),
+                                 calc(100% + 0.5px) -0.5px
+                              );
+                           }  
+
+                           .tri:nth-child(1)  { }
+                           .tri:nth-child(2)  {  transform: scaleY(-1);  }
+                           .tri:nth-child(3)  {  transform: scaleX(-1) scaleY(-1); }
+                           .tri:nth-child(4)  {  transform: scaleX(-1);  }
+                           .tri:nth-child(5), .tri:nth-child(6), .tri:nth-child(7),
+                           .tri:nth-child(8), .tri:nth-child(9), .tri:nth-child(10),
+                           .tri:nth-child(11), .tri:nth-child(12) { 
+                              display: none;
+                           }
+                        } 
+
+                        :host([reflect="6"]) { 
+                         
+                           .tile-column:nth-child(even) {  
+                              top: calc(calc(var(--hex-halfheight) * -1));  
+                           }  
+
+                           .tile-group {   
+                              height:      var(--hex-halfheight);  
+                              padding-top: var(--hex-halfheight);
+                           }
+
+                           .tri {  
+                              transform-origin: top center;
+                              clip-path: polygon(
+                                 calc(50% + .5px) 0,
+                                 calc(50% - .5px) 0,
+                                 0px 86%,
+                                 0px calc(86.6% + 1px),
+                                 100% calc(86.6% + 1px),
+                                 100% 86%
+                              );  
+                           }  
+
+                           .tri:nth-child(1) { }
+                           .tri:nth-child(2) {  transform: rotate(60deg) scaleX(-1);  }
+                           .tri:nth-child(3) {  transform: rotate(120deg); }
+                           .tri:nth-child(4) {  transform: rotate(180deg) scaleX(-1); }
+                           .tri:nth-child(5) {  transform: rotate(240deg); }
+                           .tri:nth-child(6) {  transform: rotate(-60deg) scaleX(-1); } 
+                           .tri:nth-child(7), .tri:nth-child(8), .tri:nth-child(9),
+                           .tri:nth-child(10), .tri:nth-child(11), .tri:nth-child(12) {
+                              display: none;
+                           } 
+                        } 
+                         
+                        :host([reflect="8"]) { 
+
+                           .tile-group {    
+                              height: var(--tile-width);   
+                           }
+
+                           .tri {  
+                              transform-origin: bottom right;
+                              clip-path: polygon(
+                                 -0.5px -0.5px,
+                                 calc(100% + 0.5px) -0.5px,
+                                 calc(100% + 0.5px) calc(100% + 0.5px),
+                                 calc(100% - 0.5px) calc(100% + 0.5px),
+                                 -0.5px 0
+                              ); 
+                           } 
+
+                           .tri:nth-child(1) { }
+                           .tri:nth-child(2) { transform: translateX(0%) scaleX(-1); }
+                           .tri:nth-child(3) { transform: rotate(180deg); }
+                           .tri:nth-child(4) { transform: rotate(180deg) scaleX(-1); }
+                           .tri:nth-child(5) { transform: rotate(270deg)  ;}
+                           .tri:nth-child(6) { transform: rotate(270deg) scaleX(-1); }
+                           .tri:nth-child(7) { transform: rotate(90deg); } 
+                           .tri:nth-child(8) { transform: rotate(90deg) scaleX(-1); } 
+                           .tri:nth-child(9),  .tri:nth-child(10),
+                           .tri:nth-child(11), .tri:nth-child(12) {
+                              display: none;
+                           } 
+                        }
+
+                        :host([reflect="12"]) {  
+
+                           .tile-column:nth-child(even) {  
+                              top: calc(var(--hex-halfheight) * -1);  
+                           }  
+
+                           .tile-group {   
+                              height:      var(--hex-halfheight);  
+                              padding-top: var(--hex-halfheight);
+                           }
+
+                           .tri {  
+                              width: calc(var(--tri-size) / 2);
+                              transform-origin: top right;
+
+                              clip-path: polygon(
+                                 calc(100% + 0.5px) 0,
+                                 calc(100% + 0.5px) calc(86.6% + 0.5px),
+                                 -0.5px calc(86.6% + 0.5px),
+                                 -0.5px 86.6%, 
+                                 calc(100% - 0.5px) 0
+                              );  
+                           }  
+
+                           .tri:nth-child(1)  { }
+                           .tri:nth-child(2)  {  transform: scaleX(-1); }
+                           .tri:nth-child(3)  {  transform: rotate(60deg) scaleX(-1); }
+                           .tri:nth-child(4)  {  transform: rotate(-60deg); }
+                           .tri:nth-child(5)  {  transform: rotate(60deg); } 
+                           .tri:nth-child(6)  {  transform: scaleX(-1) rotate(60deg); } 
+                           .tri:nth-child(8)  {  transform: scaleY(-1); } 
+                           .tri:nth-child(7)  {  transform: scaleY(-1) scaleX(-1); } 
+                           .tri:nth-child(9)  {  transform: scaleY(-1) rotate(60deg); } 
+                           .tri:nth-child(10) {  transform: scaleY(-1) rotate(60deg) scaleX(-1);  } 
+                           .tri:nth-child(11) {  transform: scaleY(-1) rotate(-60deg);  } 
+                           .tri:nth-child(12) {  transform: scaleY(-1) rotate(-60deg) scaleX(-1); } 
+                        }`;
+
+                     this.template = ``;
                   }
-                  else if (attr === 'num-columns') {
-                     if (oldVal != null) {
-                        if (oldVal > newVal) {
-                           [...this.shadowRoot.querySelectorAll('.tile-column')].at(-1).remove()
-                        } else if (newVal > oldVal) {
-                           this.shadowRoot.appendChild(createTileColumnNode(Number(this.getAttribute('num-rows'))))
-                        }
-                     } 
+                  connectedCallback() {   
+                     for (let i=0; i<((window.innerWidth / 240)+2); i++) {
+                        this.shadowRoot.appendChild(createTileColumnNode(((window.innerHeight / 240)+2)))
+                     }   
+                     this.setAttribute('num-columns', this.shadowRoot.children.length)
+                     this.setAttribute('num-rows', this.shadowRoot.children[0].children.length)
+                  }
+                  createTileGroup() {
+                     const tmpl = document.createElement('template')
+                     tmpl.innerHTML = createTileGroupMarkup(12)
+                     return tmpl.content.cloneNode(true)
+                  }
+                  attributeChangedCallback(attr, oldVal, newVal) { 
+                     if (attr === 'num-rows') { 
+                        if (oldVal != null) {
+                           if (oldVal > newVal) {
+                              [...this.shadowRoot.querySelectorAll('.tile-column')].forEach(col=> {
+                                 [...col.children].at(-1).remove()
+                              })
+                           } else if (newVal > oldVal) {
+                              [...this.shadowRoot.querySelectorAll('.tile-column')].forEach(col=> {
+                                 col.appendChild(this.createTileGroup())
+                              }) 
+                           }
+                        } 
+                     }
+                     else if (attr === 'num-columns') {
+                        if (oldVal != null) {
+                           if (oldVal > newVal) {
+                              [...this.shadowRoot.querySelectorAll('.tile-column')].at(-1).remove()
+                           } else if (newVal > oldVal) {
+                              this.shadowRoot.appendChild(createTileColumnNode(Number(this.getAttribute('num-rows'))))
+                           }
+                        } 
+                     }
                   }
                }
-            }
 
-         })())
- 
- 
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
- 
-
-         customElements.define('image-uploader', (()=> {
-
-            async function ifUrlExist(url) {
-               return new Promise((resolve, reject) => { 
-                  fetch(url, { method: "HEAD"}).then(response => {
-                     resolve(response.status.toString()[0] === "2")
-                     }).catch(error => { reject(false) }) 
-               })
-            }
-
-            return class extends ShadowComponent{
-               constructor() { super();
-                  this.styles = `  
-
-                     :host {
-                        text-align: center;
-                        overflow: hiden;
-                        outline: 2px dotted rgba(255,255,255,.5);
-                        display: grid;
-                        place-content: center;
-                        position: relative; 
-                        width: calc(100% - 1rem);
-                        height: calc(100% - 2rem);
-
-                        margin: 0 auto;    
-                        cursor: pointer;
-                        z-index: 1;
-                     }
-
-                     svg {
-                        fill-rule: evenodd;
-                        clip-rule: evenodd;
-                        stroke-linejoin: round;
-                        stroke-miterlimit: 2;
-                     } 
-                     p{
-                        margin:0;
-                     }
-
-                     button:not([menu]),
-                     input[type="file"]  {
-                        appearance: none;
-                        color: white;
-                        cursor: pointer;  
-                        position: relative;   
-                        display: inline-block;
-                        vertical-align: middle;
-                        padding:.3rem;
-                         
-                        max-height: 3rem;
-                        background-color: rgb(255 255 255 / .1);
-                        border-radius: .2rem;
-                        outline: 0.1rem solid rgb(0 0 0 / .1); 
-                        box-shadow: rgb(0 0 0 / .4)       -1px -1px 1px 1px inset,
-                                    rgb(255 255 255 / .1)  1px  1px 1px 1px inset; 
-                     }
-                      input[type="file"] {
-                        margin: 0 0;
-                        padding: .3rem 0 .3rem 0;
-                         display:block;
-                        width: calc(100% - 14rem);
-                      }
-                     input[type="url"] {
-                        background: rgb(255 255 255 / .2);
-                     }
-                     button:not([menu]):active,
-                     button:not([menu])[active],
-                     input[type="file"]:active  {
-                        box-shadow: rgb(0 0 0 / .4)         1px  1px 1px 1px inset,
-                                    rgb(255 255 255 / .1)  -1px -1px 1px 1px inset; 
-                        background-color: rgb(0 0 0 / .1);
-                     }
-
-                     label {
-                        font: sans-serif;
-
-                     }
-                     input[type="file"],input[type="url"] {
-                        margin-top: .25rem;
-                     }
-                     
-
-                     input[type="file"] {
-                        position: relative;
-                        width: 100%;
-
-                     }
-                
-                      :host(:hover) img#preview-image-element,
-                      :host(.selecting) img#preview-image-element { 
-                        filter: brightness(50%); 
-                     }  
-                
-                     img#preview-image-element {  
-                        box-sizing: border-box;
-                        position: relative;
-                        content: var(--image-url);   
-                        width: 100%;
-                        height: calc(300px - 3rem); 
-                     }
-                     img#preview-image-element.drag-ready {
-                        filter: brightness(150%);
-                     }
+            })())
     
-                     #preview-frame-graphic { 
-                        align-self: center;
-                        justify-self: center; 
-                     
-                        position: absolute; 
-                        z-index: 100;  
-                        opacity: 0; 
-                     }
+    
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
 
-                     :host(:hover){ 
-                        outline: 2px dotted white;
-                     }
+            customElements.define('image-uploader', (()=> {
 
-                     :host(:hover) #preview-frame-graphic {
-                        opacity: .7;
-                     } 
+               async function ifUrlExist(url) {
+                  return new Promise((resolve, reject) => { 
+                     fetch(url, { method: "HEAD"}).then(response => {
+                        resolve(response.status.toString()[0] === "2")
+                        }).catch(error => { reject(false) }) 
+                  })
+               }
 
-                     #preview-frame-graphic > svg { 
-                        width: 50%;
-                        margin: auto;
-                        fill: white;
-                     }
+               return class extends ShadowComponent{
+                  constructor() { super();
+                     this.styles = `  
 
-                     .image-submit-wrapper {
-                        display: grid;
-                        place-content: center;
-                        height: 100%;
-                        width: 100%;
-                        position: absolute; 
-                        z-index: 100; 
-                        opacity: 1;
-                     } 
+                        :host {
+                           text-align: center;
+                           overflow: hiden;
+                           outline: 2px dotted rgba(255,255,255,.5);
+                           display: grid;
+                           place-content: center;
+                           position: relative; 
+                           width: calc(100% - 1rem);
+                           height: calc(100% - 2rem);
 
-                     :host(.selecting) #preview-frame-graphic {
-                        pointer-events: none;
-                        opacity: 0!important;
-                     } 
-                     :host(.selecting) .image-submit-wrapper {
-                        visibility: visible;
-                     }   
-                     :host(:not(.selecting)) .image-submit-wrapper {
-                        visibility: hidden;
-                     } 
-                     .img-submit-inner {
-                        padding: 1rem;
-                        align-self: center;
-                        justify-self: center; 
-                     }
-                     .img-submit-group.cancel {
+                           margin: 0 auto;    
+                           cursor: pointer;
+                           z-index: 1;
+                        }
 
-                        margin-top: 2rem;
-                     }
-                  `;
+                        svg {
+                           fill-rule: evenodd;
+                           clip-rule: evenodd;
+                           stroke-linejoin: round;
+                           stroke-miterlimit: 2;
+                        } 
+                        p{
+                           margin:0;
+                        }
 
-                  this.template =  `
-                    
-                     <div class="image-submit-wrapper">
+                        button:not([menu]),
+                        input[type="file"]  {
+                           appearance: none;
+                           color: white;
+                           cursor: pointer;  
+                           position: relative;   
+                           display: inline-block;
+                           vertical-align: middle;
+                           padding:.3rem;
+                            
+                           max-height: 3rem;
+                           background-color: rgb(255 255 255 / .1);
+                           border-radius: .2rem;
+                           outline: 0.1rem solid rgb(0 0 0 / .1); 
+                           box-shadow: rgb(0 0 0 / .4)       -1px -1px 1px 1px inset,
+                                       rgb(255 255 255 / .1)  1px  1px 1px 1px inset; 
+                        }
+                         input[type="file"] {
+                           margin: 0 0;
+                           padding: .3rem 0 .3rem 0;
+                            display:block;
+                           width: calc(100% - 14rem);
+                         }
+                        input[type="url"] {
+                           background: rgb(255 255 255 / .2);
+                        }
+                        button:not([menu]):active,
+                        button:not([menu])[active],
+                        input[type="file"]:active  {
+                           box-shadow: rgb(0 0 0 / .4)         1px  1px 1px 1px inset,
+                                       rgb(255 255 255 / .1)  -1px -1px 1px 1px inset; 
+                           background-color: rgb(0 0 0 / .1);
+                        }
 
-                        <div class="img-submit-inner">
+                        label {
+                           font: sans-serif;
 
-                           <div class="img-submit-group">
-                              <label for="file-input-element">Choose file to upload</label>
-                              <input type="file" id="file-input-element" name="file" accept="image/*" /> 
-                           </div> 
+                        }
+                        input[type="file"],input[type="url"] {
+                           margin-top: .25rem;
+                        }
+                        
 
-                           <p> OR </p>
+                        input[type="file"] {
+                           position: relative;
+                           width: 100%;
 
-                           <div class="img-submit-group">
-                              <label for="url-input-element">Enter image URL</label>
-                              <input type="url" id="url-input-element"/> 
-                              <button title="Load Image Url" type="button" id="url-input-submit">Load</button>
-                           </div> 
+                        }
+                   
+                         :host(:hover) img#preview-image-element,
+                         :host(.selecting) img#preview-image-element { 
+                           filter: brightness(50%); 
+                        }  
+                   
+                        img#preview-image-element {  
+                           box-sizing: border-box;
+                           position: relative;
+                           content: var(--image-url);   
+                           width: 100%;
+                           height: calc(300px - 3rem); 
+                        }
+                        img#preview-image-element.drag-ready {
+                           filter: brightness(150%);
+                        }
+       
+                        #preview-frame-graphic { 
+                           align-self: center;
+                           justify-self: center; 
+                        
+                           position: absolute; 
+                           z-index: 100;  
+                           opacity: 0; 
+                        }
 
-                           <div class="cancel img-submit-group"> 
-                              <button title="Cancel Load New Image" type="button" id="img-load-cancel">Cancel</button>
-                           </div> 
+                        :host(:hover){ 
+                           outline: 2px dotted white;
+                        }
+
+                        :host(:hover) #preview-frame-graphic {
+                           opacity: .7;
+                        } 
+
+                        #preview-frame-graphic > svg { 
+                           width: 50%;
+                           margin: auto;
+                           fill: white;
+                        }
+
+                        .image-submit-wrapper {
+                           display: grid;
+                           place-content: center;
+                           height: 100%;
+                           width: 100%;
+                           position: absolute; 
+                           z-index: 100; 
+                           opacity: 1;
+                        } 
+
+                        :host(.selecting) #preview-frame-graphic {
+                           pointer-events: none;
+                           opacity: 0!important;
+                        } 
+                        :host(.selecting) .image-submit-wrapper {
+                           visibility: visible;
+                        }   
+                        :host(:not(.selecting)) .image-submit-wrapper {
+                           visibility: hidden;
+                        } 
+                        .img-submit-inner {
+                           padding: 1rem;
+                           align-self: center;
+                           justify-self: center; 
+                        }
+                        .img-submit-group.cancel {
+
+                           margin-top: 2rem;
+                        }
+                     `;
+
+                     this.template =  `
+                       
+                        <div class="image-submit-wrapper">
+
+                           <div class="img-submit-inner">
+
+                              <div class="img-submit-group">
+                                 <label for="file-input-element">Choose file to upload</label>
+                                 <input type="file" id="file-input-element" name="file" accept="image/*" /> 
+                              </div> 
+
+                              <p> OR </p>
+
+                              <div class="img-submit-group">
+                                 <label for="url-input-element">Enter image URL</label>
+                                 <input type="url" id="url-input-element"/> 
+                                 <button title="Load Image Url" type="button" id="url-input-submit">Load</button>
+                              </div> 
+
+                              <div class="cancel img-submit-group"> 
+                                 <button title="Cancel Load New Image" type="button" id="img-load-cancel">Cancel</button>
+                              </div> 
+
+                           </div>
 
                         </div>
 
-                     </div>
+                      <div id="preview-frame-graphic">
+                           <svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 120 120">
+                              <path d="M77 111H25A16 16 0 0 1 9 95V25A16 16 0 0 1 25 9h70a16 16 0 0 1 16 16v52a24 24 0 0 0-2-1.7V25a14 14 0 0 0-14-14H25a14 14 0 0 0-14 14v62l20-19 20 17 27-29 10.5 14.6A24 24 0 0 0 77.1 111Z"/>
+                              <circle cx="38" cy="36" r="13"/>
+                              <path d="M94 72.6a21.4 21.4 0 1 1 0 42.8 21.4 21.4 0 0 1 0-42.8Zm-2.5 23.9v6.5c0 .8.7 1.5 1.5 1.5h2c.8 0 1.5-.7 1.5-1.5v-6.5h6.5c.8 0 1.5-.7 1.5-1.5v-2c0-.8-.7-1.5-1.5-1.5h-6.5V85c0-.8-.7-1.5-1.5-1.5h-2c-.8 0-1.5.7-1.5 1.5v6.5H85c-.8 0-1.5.7-1.5 1.5v2c0 .8.7 1.5 1.5 1.5h6.5Z"/>
+                           </svg> 
+                        </div>  
 
-                   <div id="preview-frame-graphic">
-                        <svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 120 120">
-                           <path d="M77 111H25A16 16 0 0 1 9 95V25A16 16 0 0 1 25 9h70a16 16 0 0 1 16 16v52a24 24 0 0 0-2-1.7V25a14 14 0 0 0-14-14H25a14 14 0 0 0-14 14v62l20-19 20 17 27-29 10.5 14.6A24 24 0 0 0 77.1 111Z"/>
-                           <circle cx="38" cy="36" r="13"/>
-                           <path d="M94 72.6a21.4 21.4 0 1 1 0 42.8 21.4 21.4 0 0 1 0-42.8Zm-2.5 23.9v6.5c0 .8.7 1.5 1.5 1.5h2c.8 0 1.5-.7 1.5-1.5v-6.5h6.5c.8 0 1.5-.7 1.5-1.5v-2c0-.8-.7-1.5-1.5-1.5h-6.5V85c0-.8-.7-1.5-1.5-1.5h-2c-.8 0-1.5.7-1.5 1.5v6.5H85c-.8 0-1.5.7-1.5 1.5v2c0 .8.7 1.5 1.5 1.5h6.5Z"/>
-                        </svg> 
-                     </div>  
-
-                     <img id="preview-image-element" class="preview-image" >`;
+                        <img id="preview-image-element" class="preview-image" >`;
 
 
-               }
-               get selecting() { 
-                  return this.classList.contains('selecting') 
-               }
-               set selecting(val) {  
-                  
-                  if (val == false) {
-                     this.classList.remove('selecting') 
-                  } else if (val==true) { 
-                     this.classList.add('selecting') 
-                  }  
-               } 
-
-               connectedCallback() {
-
-                  this.selecting = false;
-    
-                  this.fileInputEl = this.shadowRoot.querySelector('#file-input-element')
-                  this.prevImgEl = this.shadowRoot.querySelector('#preview-image-element')
-                  this.urlInputEl = this.shadowRoot.querySelector('#url-input-element')
-                  this.checkbox = this.shadowRoot.querySelector('input[type="checkbox"]')
-
-                  this.shadowRoot.addEventListener('click', e=> {
-                     e.stopPropagation()
-                     if (this.selecting === false) { this.selecting = true }
-                  })
-
-                  this.fileInputEl.addEventListener('change', e=> { 
-                     const file = this.fileInputEl.files[0]
-                     if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(1))) { 
-                        let url=URL.createObjectURL(file)
-                        this.selecting = false;
-                        setCssProp('--image-url', 'url('+url+')')
-                     }
-                  }) 
-
-                  this.shadowRoot.querySelector('#url-input-submit').addEventListener('click', async e=> { 
-
-                     const currVal = this.urlInputEl.value,
-                           extens  = currVal.split('.').at(-1)
-
-                     if (currVal.startsWith('http') && extens && IMG_FILE_EXTENSIONS.includes(extens)) { 
-                        try {
-                           const urlValid = await ifUrlExist(currVal)
-                           if (urlValid) {
-                              this.selecting = false;
-                              setCssProp('--image-url', 'url('+this.urlInputEl.value+')') 
-                           }
-                        }
-                        catch(error) {
-                           console.log('error caught')
-                        }
-                     } 
-                  }) 
-    
-                  this.addEventListener('dragover', e=> e.preventDefault())
-
-                  this.addEventListener('dragenter', e=> {
-                      e.preventDefault()
-                     this.prevImgEl.classList.add('drag-ready') 
-                     setTimeout(()=> {
-                       this.prevImgEl.classList.remove('drag-ready') 
-                     }, 300)
-                  }) 
-                  this.addEventListener('drop', e=> {  
-                     console.log("drop event")
-                     e.preventDefault();    
-                     [...e.dataTransfer.items] 
-                        .filter( x => x.kind === 'file')
-                        .forEach( async blob => {   
-
-                           const file = await blob.getAsFile()  
-                           console.log(file.name)
-                           if (file.name.split('.').at(-1)) { 
-                              setCssProp('--image-url', 'url('+URL.createObjectURL(file)+')')
-                           }
-                        })  
-                  }) 
-
-                  this.shadowRoot.querySelector('#img-load-cancel').addEventListener('click', e=> {
-                     //console.log("setting selecting to false")
-                     e.stopPropagation()
-                     this.selecting = false
-                  }) 
-               }
-            } 
-         })())
-    
-
-
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-      ;(function(){
-
-         const SNAP_TOLERANCE = 80,
-               origWidth      = 300,
-               raf            = requestAnimationFrame,
-               MINMAINWIDTH   = 210, 
-               dashEl         = document.getElementById('dash'), 
-               innerDashEl    = document.getElementById('inner-dash');
-
-         let dashMin, intervalId
-
-         setDashMin(origWidth)
-
-   
-
-         function startDashMove(event) {
-           
-            document.body.classList.add('no-transitions'); 
-
-            const tol     = SNAP_TOLERANCE,
-                  screen  = { x: window.innerWidth, y: window.innerHeight },
-                  mainmin = screen.x, 
-                  offset  = event.x - getDashWidth();
-          
-            trackPointer(event,  {  
-               budgeThreshold: 0,  
-               track: evt => {      
-                  const xPos = evt.x - offset 
-                  if (xPos < screen.x && xPos >= 0 && xPos !== getDashWidth()) {
-
-                     setDashWidth(xPos)
-
-                     setInnerDashTranslate(Math.max(dashMin*-1, Math.min( 0, xPos-dashMin))) 
-
-                     toggleAttr(document.body, 'dash-open', xPos > 0) ;  
-                  } 
-               }, 
-               release: (event) => {        
-                  const dx = getDashWidth() 
-                  document.body.classList.remove('no-transitions')    
-                  if (dx > (screen.x - tol/1.5)) { 
-                     setDashWidth(screen.x)
                   }
-                  else { 
-                     if      (dx > mainmin)       { setDashWidth(mainmin) }
-                     else if (dx < dashMin - tol) { raf(()=> toggleDash('close')) }
-                     else if (dx < dashMin + tol) { raf(()=> toggleDash('open')) } 
-                  }   
-               }
-            });  
-         }
-          
-         function startImageMove(event) {
+                  get selecting() { 
+                     return this.classList.contains('selecting') 
+                  }
+                  set selecting(val) {  
+                     
+                     if (val == false) {
+                        this.classList.remove('selecting') 
+                     } else if (val==true) { 
+                        this.classList.add('selecting') 
+                     }  
+                  } 
 
-            let shouldRestart = false;
+                  connectedCallback() {
 
-            document.body.classList.add('no-transitions'); 
+                     this.selecting = false;
+       
+                     this.fileInputEl = this.shadowRoot.querySelector('#file-input-element')
+                     this.prevImgEl = this.shadowRoot.querySelector('#preview-image-element')
+                     this.urlInputEl = this.shadowRoot.querySelector('#url-input-element')
+                     this.checkbox = this.shadowRoot.querySelector('input[type="checkbox"]')
 
-            const activeTool = document.body.getAttribute('active-tool')
-            const origClick   = [ Math.round(event.x), Math.round(event.y) ];
+                     this.shadowRoot.addEventListener('click', e=> {
+                        e.stopPropagation()
+                        if (this.selecting === false) { this.selecting = true }
+                     })
 
-            let startingPos, changeFunc;
+                     this.fileInputEl.addEventListener('change', e=> { 
+                        const file = this.fileInputEl.files[0]
+                        if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(1))) { 
+                           let url=URL.createObjectURL(file)
+                           this.selecting = false;
+                           setCssProp('--image-url', 'url('+url+')')
+                        }
+                     }) 
 
-            const zoomFraction = 1 / (Number(readCssProp('--zoom-amount').replace('%','')) / 100);
+                     this.shadowRoot.querySelector('#url-input-submit').addEventListener('click', async e=> { 
 
-            if (activeTool === 'move') { 
-               startingPos = readCssProp('--image-position').replace(/px/g,'').split(' ').map(Number);
-               changeFunc = (e)=> {
-                  setCssProp('--image-position', 
-                     (startingPos[0] + (Math.round(e.x - origClick[0]) * zoomFraction)) + 'px ' +
-                     (startingPos[1] + (Math.round(e.y - origClick[1]) * zoomFraction)) + 'px'
-                  )
-               }
-            }
-            else if (activeTool === 'twist') { 
-               startingPos = Number(readCssProp('--image-rotation').replace(/[^0-9]/g,'')) 
-               changeFunc = (e)=> {
-                  setCssProp('--image-rotation', 'rotate('+(startingPos + Math.round(e.y - origClick[1])) + 'deg)')
-               }
-            } 
-            else if (activeTool === 'pan') {  
-               startingPos = [ Number(readCssProp('--pan-x').replace('px','')), Number(readCssProp('--pan-y').replace('px',''))];
-               changeFunc = (e)=> {
-                  setCssProp('--pan-x',(startingPos[0]+(  Math.round(e.x - origClick[0])*zoomFraction)) + 'px')
-                  setCssProp('--pan-y',(startingPos[1]+(  Math.round(e.y - origClick[1])*zoomFraction)) + 'px') 
-               }
-            }
+                        const currVal = this.urlInputEl.value,
+                              extens  = currVal.split('.').at(-1)
+
+                        if (currVal.startsWith('http') && extens && IMG_FILE_EXTENSIONS.includes(extens)) { 
+                           try {
+                              const urlValid = await ifUrlExist(currVal)
+                              if (urlValid) {
+                                 this.selecting = false;
+                                 setCssProp('--image-url', 'url('+this.urlInputEl.value+')') 
+                              }
+                           }
+                           catch(error) {
+                              console.log('error caught')
+                           }
+                        } 
+                     }) 
+       
+                     this.addEventListener('dragover', e=> e.preventDefault())
+
+                     this.addEventListener('dragenter', e=> {
+                         e.preventDefault()
+                        this.prevImgEl.classList.add('drag-ready') 
+                        setTimeout(()=> {
+                          this.prevImgEl.classList.remove('drag-ready') 
+                        }, 300)
+                     }) 
+                     this.addEventListener('drop', e=> {  
+                        console.log("drop event")
+                        e.preventDefault();    
+                        [...e.dataTransfer.items] 
+                           .filter( x => x.kind === 'file')
+                           .forEach( async blob => {   
+
+                              const file = await blob.getAsFile()  
+                              console.log(file.name)
+                              if (file.name.split('.').at(-1)) { 
+                                 setCssProp('--image-url', 'url('+URL.createObjectURL(file)+')')
+                              }
+                           })  
+                     }) 
+
+                     this.shadowRoot.querySelector('#img-load-cancel').addEventListener('click', e=> {
+                        //console.log("setting selecting to false")
+                        e.stopPropagation()
+                        this.selecting = false
+                     }) 
+                  }
+               } 
+            })())
+       
+
+
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+         ;(function(){
+
+            const SNAP_TOLERANCE = 80,
+                  origWidth      = 300,
+                  raf            = requestAnimationFrame,
+                  MINMAINWIDTH   = 210, 
+                  dashEl         = document.getElementById('dash'), 
+                  innerDashEl    = document.getElementById('inner-dash');
+
+            let dashMin, intervalId
+
+            setDashMin(origWidth)
+
       
-            trackPointer(event,  {  
-               budgeThreshold: 0,  
-               start: evt =>{
+
+            function startDashMove(event) {
+              
+               document.body.classList.add('no-transitions'); 
+
+               const tol     = SNAP_TOLERANCE,
+                     screen  = { x: window.innerWidth, y: window.innerHeight },
+                     mainmin = screen.x, 
+                     offset  = event.x - getDashWidth();
+             
+               trackPointer(event,  {  
+                  budgeThreshold: 0,  
+                  track: evt => {      
+                     const xPos = evt.x - offset 
+                     if (xPos < screen.x && xPos >= 0 && xPos !== getDashWidth()) {
+
+                        setDashWidth(xPos)
+
+                        setInnerDashTranslate(Math.max(dashMin*-1, Math.min( 0, xPos-dashMin))) 
+
+                        toggleAttr(document.body, 'dash-open', xPos > 0) ;  
+                     } 
+                  }, 
+                  release: (event) => {        
+                     const dx = getDashWidth() 
+                     document.body.classList.remove('no-transitions')    
+                     if (dx > (screen.x - tol/1.5)) { 
+                        setDashWidth(screen.x)
+                     }
+                     else { 
+                        if      (dx > mainmin)       { setDashWidth(mainmin) }
+                        else if (dx < dashMin - tol) { raf(()=> toggleDash('close')) }
+                        else if (dx < dashMin + tol) { raf(()=> toggleDash('open')) } 
+                     }   
+                  }
+               });  
+            }
+             
+            function startImageMove(event) {
+
+               let shouldRestart = false;
+
+               document.body.classList.add('no-transitions'); 
+
+               const activeTool = document.body.getAttribute('active-tool')
+               const origClick   = [ Math.round(event.x), Math.round(event.y) ];
+
+               let startingPos, changeFunc;
+
+               const zoomFraction = 1 / (Number(readCssProp('--zoom-amount').replace('%','')) / 100);
+
+               if (activeTool === 'move') { 
+                  startingPos = readCssProp('--image-position').replace(/px/g,'').split(' ').map(Number);
+                  changeFunc = (e)=> {
+                     setCssProp('--image-position', 
+                        (startingPos[0] + (Math.round(e.x - origClick[0]) * zoomFraction)) + 'px ' +
+                        (startingPos[1] + (Math.round(e.y - origClick[1]) * zoomFraction)) + 'px'
+                     )
+                  }
+               }
+               else if (activeTool === 'twist') { 
+                  startingPos = Number(readCssProp('--image-rotation').replace(/[^0-9]/g,'')) 
+                  changeFunc = (e)=> {
+                     setCssProp('--image-rotation', 'rotate('+(startingPos + Math.round(e.y - origClick[1])) + 'deg)')
+                  }
+               } 
+               else if (activeTool === 'pan') {  
+                  startingPos = [ Number(readCssProp('--pan-x').replace('px','')), Number(readCssProp('--pan-y').replace('px',''))];
+                  changeFunc = (e)=> {
+                     setCssProp('--pan-x',(startingPos[0]+(  Math.round(e.x - origClick[0])*zoomFraction)) + 'px')
+                     setCssProp('--pan-y',(startingPos[1]+(  Math.round(e.y - origClick[1])*zoomFraction)) + 'px') 
+                  }
+               }
+         
+               trackPointer(event,  {  
+                  budgeThreshold: 0,  
+                  start: evt =>{
+                     if (intervalId != null) {
+                        stopAnimation()
+                        shouldRestart = true;
+                     } 
+                  },
+                  track: changeFunc, 
+                  release: () => {       
+                     document.body.classList.remove('no-transitions') 
+                     if (shouldRestart == true) {
+                        startAnimation()
+                     }
+                  }
+               }); 
+            }
+
+            function toggleDash(state) { 
+
+               toggleAttr(document.body, 'dash-open', state=='open');  
+
+               if (state == 'open') {
+                  setDashWidth(dashMin)
+                  setInnerDashTranslate(0)
+               } else {
+                  setDashWidth(0)
+                  setInnerDashTranslate(dashMin * -1)
+               } 
+            }
+
+            function setInnerDashTranslate(translateAmt) {
+               innerDashEl.style.transform = 'translateX(' + translateAmt + 'px)'
+            }
+
+            function setDashMin(amt) {
+               dashMin = amt;
+               innerDashEl.style.minWidth = dashMin + 'px'
+            }
+
+            function getDashWidth() {
+               return Number(dashEl.style.width.replace('px',''))
+            }
+
+            function setDashWidth(amt) {
+               dashEl.style.width = amt + 'px'
+            }
+    
+
+            let activeAnimations = [],
+                animLim = { r: 3100, x: 3400, y: 2870 },
+                incr = { r: 0, x: 1, y: 0 };
+
+            function toggleAnimationProp(property) {
+               if (property==='rotate') { property = 'r' } 
+               if (!activeAnimations.includes(property)){
+                  if (activeAnimations.length===0){ startAnimation() }
+                  activeAnimations.push(property) 
+               } 
+               else {
+                  activeAnimations = activeAnimations.filter(itm => itm!==property) 
+                  if (activeAnimations.length === 0) { stopAnimation()  }
+               }
+            }
+    
+            function startAnimation(param) {   
+               if (intervalId == null) {  
+                  const changeFunc = ()=> {  
+                     const [x,y] = readCssProp('--image-position').replace(/px/g,'').split(' ').map(Number), 
+                           pos   = { x, y, r: Number(readCssProp('--image-rotation').replace(/[^\-0-9]/g,''))}; 
+                     ['x','y','r'].forEach(prop => {
+                        if (activeAnimations.includes(prop)) {
+                           if (incr[prop] === 0 || pos[prop] <= -animLim[prop])  { incr[prop]=1 }
+                           if (pos[prop] >= animLim[prop]) { incr[prop] = -1 }
+                        }
+                        else { incr[prop]= 0; }
+                     });
+                     if (!(incr.x === 0 && incr.y ===0)) {
+                        setCssProp('--image-position', (x + incr.x)+'px '+(y + incr.y)+'px')     
+                     }               
+                     if (incr.r !== 0) {
+                        setCssProp('--image-rotation', 'rotate('+(pos.r + incr.r) + 'deg)') 
+                     }   
+                  } 
+                  intervalId = setInterval(changeFunc, 3);
+               } 
+            }
+            function stopAnimation(param) { 
+               clearInterval(intervalId);
+               intervalId = null; 
+            }
+
+            let activeTool =''
+
+            function activateTool(tool) {
+               if (tool !== activeTool) { 
+                  activeTool = tool
+                  document.body.setAttribute('active-tool', tool) 
+               }
+            }
+            
+            activateTool('move')
+            const query = document.getElementById.bind(document)
+
+            query('menu-button').addEventListener('click', e=> {
+               toggleDash(getDashWidth() > 0 ? 'close' : 'open')
+            }) 
+
+            query('dash-handle').addEventListener('pointerdown', e=> {
+               if (e.target.tagName === 'DIV') { startDashMove(e) }
+            }) 
+
+            query('main').addEventListener('pointerdown', e=> {
+               startImageMove(e)
+            })    
+
+            query('mirror-radio-select').addEventListener('click', e=> {
+               let val = Number(e.originalTarget?.value ?? e.target.value)
+               if ([4,6,8,12].includes(val)) {
+                  document.querySelector('hypno-tiler').setAttribute('reflect', val)    
+               } 
+            });
+    
+            query('canvas-tools-toolbar').addEventListener('click', e=> {
+               const properTarget = (e.originalTarget ?? e.target)
+               const tName = properTarget.getAttribute('tool-name')
+               if (tName){
+                  properTarget.setAttribute('active','');
+
+                  [...properTarget.parentNode.children].forEach(child=>{
+                     if (child!==properTarget) { child.removeAttribute('active') }
+                  }) 
+                  activateTool(tName) 
+               }
+               
+            })
+    
+       
+           ;['x','y','rotate'].forEach(toggle=> {
+               query('animate-'+toggle+'-toggle').addEventListener('toggle-check', e=> toggleAnimationProp(toggle)) 
+            })  
+           toggleAnimationProp('x')
+
+            const hypno = document.querySelector('hypno-tiler')
+            
+            const rowColIncr = (rowOrCol, e)=> { 
+               const currVal = Number(hypno.getAttribute(`num-${rowOrCol}s`)),
+                     incr    = (e.detail.value === 'plus' ? 1 : -1),
+                     newVal  = Math.max(1, Math.min(20, currVal + incr)); 
+               query(`${rowOrCol}s-display`).innerHTML = newVal;
+               hypno.setAttribute(`num-${rowOrCol}s`, newVal)
+            }
+            setTimeout(()=>{
+               for (let rowCol of ['rows','columns']) {
+                  query(rowCol+'-display').innerHTML = hypno.getAttribute('num-'+rowCol)
+               }
+            },100);
+            
+            query('rows-incrementer').addEventListener('increment', e=> rowColIncr('row',e))
+            query('columns-incrementer').addEventListener('increment',e=> rowColIncr('column',e))
+
+    
+            let aniPause = false,
+                timeout  = 0;
+            query('image-scale-input-slider').addEventListener('range-change', e=> {
+
+               if (e.detail.from === 'input' ) {
                   if (intervalId != null) {
                      stopAnimation()
-                     shouldRestart = true;
-                  } 
-               },
-               track: changeFunc, 
-               release: () => {       
-                  document.body.classList.remove('no-transitions') 
-                  if (shouldRestart == true) {
-                     startAnimation()
-                  }
+                     document.body.classList.add('no-transitions') 
+                     aniPause = true;
+                  }  
+                  clearTimeout(timeout);
+                  timeout = setTimeout(()=> {
+                     document.body.classList.remove('no-transitions') 
+                     if (aniPause == true) { startAnimation() }
+                  }, 500); 
                }
-            }); 
-         }
-
-         function toggleDash(state) { 
-
-            toggleAttr(document.body, 'dash-open', state=='open');  
-
-            if (state == 'open') {
-               setDashWidth(dashMin)
-               setInnerDashTranslate(0)
-            } else {
-               setDashWidth(0)
-               setInnerDashTranslate(dashMin * -1)
-            } 
-         }
-
-         function setInnerDashTranslate(translateAmt) {
-            innerDashEl.style.transform = 'translateX(' + translateAmt + 'px)'
-         }
-
-         function setDashMin(amt) {
-            dashMin = amt;
-            innerDashEl.style.minWidth = dashMin + 'px'
-         }
-
-         function getDashWidth() {
-            return Number(dashEl.style.width.replace('px',''))
-         }
-
-         function setDashWidth(amt) {
-            dashEl.style.width = amt + 'px'
-         }
- 
-
-         let activeAnimations = [],
-             animLim = { r: 3100, x: 3400, y: 2870 },
-             incr = { r: 0, x: 1, y: 0 };
-
-         function toggleAnimationProp(property) {
-            if (property==='rotate') { property = 'r' } 
-            if (!activeAnimations.includes(property)){
-               if (activeAnimations.length===0){ startAnimation() }
-               activeAnimations.push(property) 
-            } 
-            else {
-               activeAnimations = activeAnimations.filter(itm => itm!==property) 
-               if (activeAnimations.length === 0) { stopAnimation()  }
-            }
-         }
- 
-         function startAnimation(param) {   
-            if (intervalId == null) {  
-               const changeFunc = ()=> {  
-                  const [x,y] = readCssProp('--image-position').replace(/px/g,'').split(' ').map(Number), 
-                        pos   = { x, y, r: Number(readCssProp('--image-rotation').replace(/[^\-0-9]/g,''))}; 
-                  ['x','y','r'].forEach(prop => {
-                     if (activeAnimations.includes(prop)) {
-                        if (incr[prop] === 0 || pos[prop] <= -animLim[prop])  { incr[prop]=1 }
-                        if (pos[prop] >= animLim[prop]) { incr[prop] = -1 }
-                     }
-                     else { incr[prop]= 0; }
-                  });
-                  if (!(incr.x === 0 && incr.y ===0)) {
-                     setCssProp('--image-position', (x + incr.x)+'px '+(y + incr.y)+'px')     
-                  }               
-                  if (incr.r !== 0) {
-                     setCssProp('--image-rotation', 'rotate('+(pos.r + incr.r) + 'deg)') 
-                  }   
-               } 
-               intervalId = setInterval(changeFunc, 3);
-            } 
-         }
-         function stopAnimation(param) { 
-            clearInterval(intervalId);
-            intervalId = null; 
-         }
-
-         let activeTool =''
-
-         function activateTool(tool) {
-            if (tool !== activeTool) { 
-               activeTool = tool
-               document.body.setAttribute('active-tool', tool) 
-            }
-         }
-         
-         activateTool('move')
-         const query = document.getElementById.bind(document)
-
-         query('menu-button').addEventListener('click', e=> {
-            toggleDash(getDashWidth() > 0 ? 'close' : 'open')
-         }) 
-
-         query('dash-handle').addEventListener('pointerdown', e=> {
-            if (e.target.tagName === 'DIV') { startDashMove(e) }
-         }) 
-
-         query('main').addEventListener('pointerdown', e=> {
-            startImageMove(e)
-         })    
-
-         query('mirror-radio-select').addEventListener('click', e=> {
-            let val = Number(e.originalTarget?.value ?? e.target.value)
-            if ([4,6,8,12].includes(val)) {
-               document.querySelector('hypno-tiler').setAttribute('reflect', val)    
-            } 
-         });
-   
-        // const toolInfo = {
-         //   'move': 'Move Source Image',
-        //    'pan' : 'Move Canvas',
-        //    'twist': 'Twist' 
-        // }
-         //const toolNameDisp = query('tool-name-display')
-         query('canvas-tools-toolbar').addEventListener('click', e=> {
-            const properTarget = (e.originalTarget ?? e.target)
-            const tName = properTarget.getAttribute('tool-name')
-            if (tName){
-               properTarget.setAttribute('active','');
-
-               [...properTarget.parentNode.children].forEach(child=>{
-                  if (child!==properTarget) { child.removeAttribute('active') }
-               }) 
-               activateTool(tName) 
-            }
+               
+               setCssProp('--image-scale', e.detail.value + '%')  
+            })
             
-         })
- 
-   
-         
+            query('zoom-input-slider').addEventListener('range-change', e=> {
+               setCssProp('--zoom-amount', e.detail.value + '%')
+            })
 
-        ;['x','y','rotate'].forEach(toggle=> {
-            query('animate-'+toggle+'-toggle').addEventListener('toggle-check', e=> toggleAnimationProp(toggle)) 
-         })  
-        toggleAnimationProp('x')
+            query('rotate-input-slider').addEventListener('range-change', e=> {
+               setCssProp('--canvas-rotation', e.detail.value + 'deg')
+            })
 
-         const hypno = document.querySelector('hypno-tiler')
-         
-         const rowColIncr = (rowOrCol, e)=> { 
-            const currVal = Number(hypno.getAttribute(`num-${rowOrCol}s`)),
-                  incr    = (e.detail.value === 'plus' ? 1 : -1),
-                  newVal  = Math.max(1, Math.min(20, currVal + incr)); 
-            query(`${rowOrCol}s-display`).innerHTML = newVal;
-            hypno.setAttribute(`num-${rowOrCol}s`, newVal)
-         }
-         for (let rowCol of ['rows','columns']) {
-            query(rowCol+'-display').innerHTML = hypno.getAttribute('num-'+rowCol)
-         }
-         query('rows-incrementer').addEventListener('increment', e=> rowColIncr('row',e))
-         query('columns-incrementer').addEventListener('increment',e=> rowColIncr('column',e))
-
- 
-         let aniPause = false,
-             timeout  = 0;
-         query('image-scale-input-slider').addEventListener('range-change', e=> {
-
-            if (e.detail.from === 'input' ) {
-               if (intervalId != null) {
-                  stopAnimation()
-                  document.body.classList.add('no-transitions') 
-                  aniPause = true;
-               }  
-               clearTimeout(timeout);
-               timeout = setTimeout(()=> {
-                  document.body.classList.remove('no-transitions') 
-                  if (aniPause == true) { startAnimation() }
-               }, 500); 
-            }
             
-            setCssProp('--image-scale', e.detail.value + '%')  
-         })
-         
-         query('zoom-input-slider').addEventListener('range-change', e=> {
-            setCssProp('--zoom-amount', e.detail.value + '%')
-         })
 
-         query('rotate-input-slider').addEventListener('range-change', e=> {
-            setCssProp('--canvas-rotation', e.detail.value + 'deg')
-         })
+            toggleDash('close') 
 
-         
+            startAnimation();
+         })() 
 
-         toggleDash('close') 
-
-         startAnimation();
-      })() 
-
+      })()
    </script>
 
 </html> 
