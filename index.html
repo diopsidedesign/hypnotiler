@@ -15,16 +15,17 @@
 
    <style>
 
-      :root { 
-                       /*server sends a diff random image with each fetch*/
-        --init-image-url: url(https://i.imgur.com/IIgZHxs.jpeg); 
-
-        --tile-width:       240px;  
+      :root {   
+        --image-url: url(https://i.imgur.com/IIgZHxs.jpeg);  
         --image-position: 0px 0px;
-        --canvas-rotation:   0deg;
-        --image-rotation:    0deg;
-        --image-scale:       100%;
-        --zoom-amount:       100%;
+        --image-rotation: 0deg;
+        --image-scale: 100%;
+        --button-size: 2rem;
+        --canvas-rotation: 0deg;
+        --zoom-amount: 100%;
+        --tile-width: 240px;   
+        --pan-x: 0px;
+        --pan-y: 0px;
       } 
        
       html, body, div {
@@ -33,6 +34,7 @@
       } 
          
       body {   
+         line-height: var(--button-size);
          position: fixed;
          box-sizing: border-box; 
          overflow: hidden hidden; 
@@ -63,7 +65,7 @@
          overflow-x: hidden; 
          overflow-y: auto;   
       }
-
+ 
       #main {  
          z-index: 10;  
          margin-left: 1rem; 
@@ -71,12 +73,19 @@
          touch-action: none;
       } 
 
-      #main > .inner-wrapper { 
+      #main > .inner-wrapper {  
          width: 100%;  
          height: 100%; 
          top: 0;
          left: 0; 
          overflow: hidden hidden;  
+      } 
+
+      body[active-tool="move"] #main >.inner-wrapper {
+         cursor: grab;
+      } 
+      body[active-tool="pan"] #main >.inner-wrapper {
+         cursor: move;
       } 
 
       #dash {    
@@ -106,7 +115,7 @@
       } 
 
       #dash-handle .inner-wrapper { 
-         width: 1rem; 
+         width: 1rem;  
          display: flex;
          flex-flow: column nowrap;
          transform: translateX(0px);
@@ -131,7 +140,7 @@
       } 
 
       #dash > .inner-wrapper {
-         padding: 1.5rem;
+         padding: 1rem;
          display: flex; 
          flex-flow: column nowrap;   
          justify-content: start;
@@ -213,20 +222,6 @@
       body.window-resizing * { 
          transition: none!important;
       } 
-       
-      div#app { 
-         position: fixed;
-         display: grid;
-         place-content: center;
-         box-sizing: border-box; 
-         width: 100vw;
-         height: 100vh; 
-         z-index: 0; 
-         white-space: nowrap;   
-         transform-origin: center center;
-         transform: scale(var(--zoom-amount)); 
-      }
-   
       .checkered{
          background: linear-gradient(
                45deg,
@@ -254,80 +249,346 @@
          transition: none;
          transform: scaleX(1) scaleY(1) scaleZ(1);
       }
-  
+
+      /* ************************************************************* */
 
      
-      input[type=range]{ 
-         padding:0;
-         margin:0; 
-      } 
-
-      h4 {
-         margin: 1rem 0 1rem 0;
-         font-family: monospace;
-         text-align: center;
-         font-size: 1.8rem;
-         text-transform: lowercase;
-         letter-spacing: 2px;
-      }
-
-      #input-controls {
-        line-height: 3rem;
-      }
-
-      #input-controls > div {
-         display: flex;
-         flex-flow: row nowrap; 
-         width: 100%;
-      }
-
-      .dash-button,
-      #input-controls > div > label,
-      .input-control-label {
-         font-size: .75rem;
-         font-weight: bold;
-         text-transform: uppercase;
-         width: 60px;
-         flex: 0 1 auto;
-      }
-
-      .input-control-label.center {
-         width: 100%;
-         text-align: center;
-         margin-top:1rem;
-         margin-bottom: 1rem;
-      }
-
-      #input-controls > div > input {
-         width: calc(100% - 60px);
-         flex: 1 1 auto;
-      }
-
-      #credits {
-         opacity: .5;
-         text-align: center;
-         font-size: .7rem;
-         font-spacing: 2px;
-         line-height: 1.5rem;
-         font-weight :100;
-      }
-      #credits a,
-      #credits a:visited {
+ 
+      button:not([menu]),
+      input[type="radio"],
+      input[type="checkbox"] {
+         appearance: none;
          color: white;
+         cursor: pointer;  
+         position: relative;   
+         display: inline-block;
+         vertical-align: middle;
+         width: var(--button-size);
+         aspect-ratio: 1 / 1;
+         max-height: 100%;
+         background-color: rgb(255 255 255 / .1);
+         border-radius: .2rem;
+         outline: 0.1rem solid rgb(0 0 0 / .1); 
+         box-shadow: rgb(0 0 0 / .4)       -1px -1px 1px 1px inset,
+                     rgb(255 255 255 / .1)  1px  1px 1px 1px inset; 
+      }
+
+      a, a:visited { 
+         color: inherit;
          text-decoration: none;
       }
-      #credits a:hover {
+      a:hover {
          text-decoration: underline;
       }
-      image-uploader {
-         max-height: calc(300px - 3rem);
-         max-width: calc(300px - 3rem);
-      }
-      symmetry-buttonbar {
-         margin-bottom: 1rem;
+      
+
+      button:not([menu]) { 
+         
+         margin: 0;  
+         border: none;    
       }
 
+      button:not([menu]):active,
+      button:not([menu])[active],
+      input[type="radio"]:checked,
+      input[type="checkbox"]:checked {
+         box-shadow: rgb(0 0 0 / .4)         1px  1px 1px 1px inset,
+                     rgb(255 255 255 / .1)  -1px -1px 1px 1px inset; 
+         background-color: rgb(0 0 0 / .1);
+      }
+
+      button:not([menu]) svg {
+         position: relative;
+         height: 100%;
+         width: 100%;
+         fill: inherit;         
+
+      } 
+
+      button:not([menu]) svg path {
+         fill: currentcolor;
+      }
+
+      button:not([menu]):active svg,
+      button:not([menu])[active] svg { 
+          top:  1px;
+         left: 1px; 
+      } 
       
+      label {
+          
+         margin: 0;
+         display: inline-block;
+         padding: 0;
+      }
+
+      fancy-checkbox, value-incrementer {
+         --button-size: 1.6rem;
+      }
+
+      input[type="radio"] {
+         width: calc(var(--button-size) / 1.5);
+      }
+      
+      input[type="radio"] { 
+         display: inline-block;
+         margin: 0;
+         padding: 0;    
+         width: calc(var(--button-size) / 1.4);
+         border-radius: 50%; 
+      }  
+      input[type="radio"]::after {
+         content: "";
+         border-radius: 50%;
+         position: absolute;
+         height: 50%;
+         width: 50%;
+         top: calc(25% + 1px);
+         left: calc(25% + 1px);
+         background-color: white;
+         opacity: 0;
+      }
+      input[type="radio"]:checked::after {
+         border: none;
+         outline: none;
+         opacity: 1;
+      }
+
+      .toolbar {
+         display: inline-flex;
+         flex-flow: row nowrap;
+         width: 100%;
+         height:3rem;
+         margin: 0 auto; 
+      }
+
+      .toolbar > button {
+         border-radius: 0px; 
+            
+         flex: 1 0 4rem; 
+         
+      }
+      .toolbar > button::after {
+         content : attr(tool-name);
+         position: absolute;
+         top: 110%;
+         left: 0%;
+         width: 100%;
+         visibility: hidden;
+      }
+      .toolbar > button[active]::after {
+         visibility: visible;
+      }
+      .toolbar > button:first-child {
+         border-top-left-radius: 10px;
+         border-bottom-left-radius: 10px;
+      }
+      .toolbar > button:last-child {
+         border-top-right-radius: 10px;
+         border-bottom-right-radius: 10px;
+      }
+      .toolbar > button > svg {
+         min-width: 20px;
+         height:50%;
+         pointer-events: none;
+      }
+      .toolbar > button > svg path {
+         pointer-events: none;
+      }
+      .toolbar #tool-name-display {
+
+      }
+
+  
+      .app-wrap,
+      .app-wrap > div {
+         width: 100vw;
+         height: 100vh;
+         z-index: 0; 
+         top: 0; left: 0; 
+      }
+
+      .app-wrap       { position: absolute; }
+      .app-wrap > div { position: relative; }
+
+      #translate-wrap-inner {
+         transform: translateX(var(--pan-x)) translateY(var(--pan-y));
+      } 
+      #zoom-wrap-inner {
+         transform: scale(var(--zoom-amount));
+      }
+      hypno-tiler {
+         transform: rotate(var(--canvas-rotation));
+      }
+   
+      image-uploader {
+         max-height: calc(300px - 3rem); 
+      }
+  
+      .dash-section {
+         margin: 0 0 1rem 0;
+      }
+      
+
+      .row-col-num {
+          margin: 0 0 .5rem 0;
+          
+      }
+
+      .reset-button svg {
+         left: -1px;
+      }
+
+      .row-col-num span:not(:first-child) { 
+         flex: 0 0 auto; 
+         display: inline-block; 
+         text-align: right;
+         width: 18px;
+      }
+
+      .row-col-num span:first-child {
+         display: inline-block;  
+         width: 64px; 
+      } 
+
+      .row-col-num value-incrementer {
+         margin-left: 2px;
+         flex: 0 0 auto;   
+      }
+
+      value-incrementer {
+         position: relative;
+         top: -2px;
+         display: inline-block;
+      }
+ 
+      value-incrementer button:first-child {
+         border-top-left-radius: 8px;
+         border-bottom-left-radius: 8px;
+         border-top-right-radius: 0px;
+         border-bottom-right-radius: 0px;
+      }
+      value-incrementer button:nth-child(2) {
+         border-top-right-radius: 8px;
+         border-bottom-right-radius: 8px;
+         border-top-left-radius: 0px;
+         border-bottom-left-radius: 0px;
+      }
+
+      range-input {
+         display: flex;
+         width: 100%;
+         flex-flow: row nowrap;
+         justify-content: center;
+         margin-bottom: .5rem;
+      }
+      range-input > * {
+         margin: 0;
+         padding: 0;
+         box-sizing: border-box;
+      } 
+      range-input value-incrementer { 
+         flex: 0 0 auto; 
+      }
+      range-input label {
+          
+         width: 4rem;
+         flex: 0 0 auto;
+      }
+      range-input input {  
+         width: 20px;
+         flex: 1 1 auto;
+      }
+      range-input span {
+         
+         display: inline-block;
+         margin-left: .4rem;
+         width: 3rem;
+         flex: 0 0 auto;
+      }
+
+      label[for="canvas-tools-toolbar"] {
+         text-align: center;
+         letter-spacing: 2px;
+         width: 100%;  
+      }
+
+
+      .credits {
+         width: 100%;
+         text-align: center;
+         opacity: .5;
+      }
+
+      fancy-checkbox {
+         --size-fraction: calc(var(--button-size) / 16); 
+         display:        inline-flex;
+         vertical-align:      middle;
+         align-items:         center;
+         position:          relative;  
+         font:               inherit; 
+      }
+
+      fancy-checkbox input[type="checkbox"] {  
+         margin: 0 1rem 0 0;   
+         width: var(--button-size);  
+        /* border-radius: calc(var(--button-size) / 8);*/ 
+      }  
+
+      fancy-checkbox input[type="checkbox"]:not(:checked) + svg.checkmark-graphic {
+         transform: scale(0);
+      }
+      fancy-checkbox input[type="checkbox"]:checked + svg.checkmark-graphic {
+         transform: scale(1);
+      }
+
+      fancy-checkbox svg.checkmark-graphic {
+         position: absolute; 
+         pointer-events: none;
+         left: var(--size-fraction);
+         top:  var(--size-fraction);  
+         height: calc(var(--button-size) - var(--size-fraction));
+         width:  calc(var(--button-size) - var(--size-fraction));
+         transition: 50ms transform linear; 
+         color: white;
+         transition: transform 60ms linear;
+         fill: currentcolor;
+         stroke-width: 2px;
+         stroke: currentcolor;
+      } 
+         
+      label.checkbox-label { 
+         vertical-align: middle;
+         height: var(--button-size);
+         display:inline-block;
+         position: relative; 
+         width: min-content;
+         flex: 0 1 auto; 
+         font: inherit; 
+      }
+
+      .spacer-section {
+         height: 100%;
+      }
+
+      #mirror-radio-select {
+         display: inline-block;
+
+      }
+     #mirror-radio-select label {
+      margin-right: 1rem;
+     }
+     .section-title, .title-section {
+         text-align: center;
+         letter-spacing: 2px;
+     }
+
+     .title-section { 
+       display: block; 
+       padding: .3rem; 
+     }
+              
+       
    </style>
 
 
@@ -344,44 +605,87 @@
    <body class="checkered" > 
 
       <div id="dash">
+
          <div id="inner-dash" class="inner-wrapper">    
-            <h4>hypnotiler</h4>    
-               
-            <image-uploader></image-uploader>
 
-            <label class="input-control-label center" for="symmetry-buttonbar">Mirror Pattern</label>
-            <symmetry-buttonbar name="symmetry-buttonbar"></symmetry-buttonbar> 
-            
-            <div id="input-controls">
-             
-               <div>
-                  <label for="twist-input">Twist</label>
-                  <input title="Image Twist Control" type="range" id="twist-input" min="0" max="360" value="0"/>
-               </div>
-
-               <div>
-                  <label for="scale-input">Scale</label>
-                  <input title="Image Scale Control" type="range" id="scale-input" min="10" max="200" value="100"/> 
-               </div>
+            <div class="title-section"><span>hypnotiler 0.2</span></div>
  
-               <div>
-                  <label for="zoom-input">Zoom</label>
-                  <input title="Canvas Zoom Control" type="range" value="100" min="10" max="500" step="1" id="zoom-input"/> 
-               </div>
+            <image-uploader class="dash-section"></image-uploader>
+         
+            <div class="section-title">Canvas Tools</div>
+            <div id="canvas-tools-toolbar" class="dash-section toolbar"> 
+               <button active tool-name="move" type="button">
+                  <svg viewBox="0 0 56 57"><path d="M45.7 8.2c.7-.3 1.7-.4 2.7-.4 7.5 0 7.5 7.5 7.5 7.5V36a22 22 0 0 1-7.8 16.5c-3 2.6-6.6 4-9.7 4H23.5c-.8 0-10.1.3-18.2-12.1A30 30 0 0 1 0 28.5c0-3.6 1-6.7 3-9 1.9-2 4.4-3.4 8-3.8V10s0-7.5 7.4-7.5a8 8 0 0 1 3.7.8C23.1 1.6 25 0 28.4 0c3.5 0 5.3 1.6 6.3 3.3a8 8 0 0 1 3.7-.8c5.1 0 6.7 3.4 7.3 5.7ZM10.9 20.7c-8.2 1.7-7.2 12-1.4 21 6.6 10 13.8 9.8 13.8 9.8h15.1c2.1 0 4.4-1.1 6.5-2.9 3.3-2.8 6-7.4 6-12.6V15.2s0-2.4-2.5-2.4C46 12.8 46 14 46 15.2a2.5 2.5 0 1 1-5 0V10s0-2.5-2.5-2.5S36 10 36 10v5.5a2.5 2.5 0 0 1-5 0v-8S31 5 28.4 5 26 7.5 26 7.5v7.8a2.5 2.5 0 0 1-5 0V10s0-2.5-2.5-2.5S16 10 16 10v15a2.5 2.5 0 0 1-5 0v-4.3Z"/></svg>
+               </button>
+               <button tool-name="twist" type="button">
+                  <svg slot="button-1" emit-value="twist" viewBox="0 0 280 309"><path d="M145 0v26h-10V0h10Zm0 45v26h-10V45h10Zm0 89v26h-10v-26h10Zm0-44v26h-10V90h10Zm0 149v26h-10v-26h10Zm0 44v26h-10v-26h10ZM0 130v-4c0-24 52-44 120-48v30c-54 3-98 16-111 34-1 1-9-12-9-12Zm0 38v-23c6 15 46 30 95 36v32c-55-6-95-24-95-45Zm175-9v24c54-5 98-21 105-38v23c0 22-45 41-105 46v25l-62-40 62-40Zm-15-81c68 4 120 24 120 48v4s-8 13-9 12c-13-18-56-31-111-34V78Z"/></svg>
+               </button>
+               <button tool-name="pan" type="button">
+                  <svg slot="button-2" emit-value="pan" viewBox="0 0 50 50"><path d="m0 25 10-9v5h11V10h-5l9-10 9 10h-5v11h11v-5l10 9-10 9v-5H29v11h5l-9 10-9-10h5V29H10v5L0 25Z"/></svg>
+               </button>  
+            </div>
+            <div class="dash-section"></div>
 
-               <div>
-                  <label for="rotate-input">Rotate</label>
-                  <input title="Canvas rotation control" type="range" value="0" min="0" max="360" step="15" id="rotate-input" /> 
-               </div>  
-
+            <div class="dash-section">
+               <range-input label="Scale" id="image-scale-input-slider" unit="%" min="10" max="500" step="1" value="100"> 
+               </range-input>
+               <range-input label="Zoom" id="zoom-input-slider" unit="%" min="10" max="500" step="2" value="100"> 
+               </range-input>
+               <range-input label="Rotate" id="rotate-input-slider" unit="°" min="0" max="360" step="15" value="0"> 
+               </range-input>
             </div>
 
-            <div id="credits">
+            <div class="dash-section">
+               <span>Num. of Mirrors</span>
+
+               <div id="mirror-radio-select">
+                 <input type="radio" id="mirror4" name="age" value="4">
+                 <label for="mirror4">4</label>
+                 <input checked type="radio" id="mirror6" name="age" value="6">
+                 <label for="mirror6">6</label>
+                 <input type="radio" id="mirror8" name="age" value="8">
+                 <label for="mirror8">8</label>
+                 <input type="radio" id="mirror12" name="age" value="12">
+                 <label for="mirror12">12</label>
+               </div> 
+            </div>
+      
+            <div class="dash-section">
+               <div class="row-col-num">
+                  <span>Columns</span> 
+                  <span id="columns-display"></span>
+                  <value-incrementer id="columns-incrementer"></value-incrementer>
+               </div>
+               <div class="row-col-num">
+                  <span>Rows</span> 
+                  <span id="rows-display"></span>
+                  <value-incrementer id="rows-incrementer"></value-incrementer>
+               </div> 
+            </div>
+             
+            <div class="dash-section" id="animation-control-area">  
+
+               <div class="animate-properties-group">
+                  <div>Animate:</div>
+                  <span>X</span>
+                  <fancy-checkbox checked id="animate-x-toggle"></fancy-checkbox>
+
+                  <span>Y</span>
+                  <fancy-checkbox id="animate-y-toggle"></fancy-checkbox>
+
+                  <span>Twist</span>
+                  <fancy-checkbox id="animate-rotate-toggle"></fancy-checkbox>  
+               </div>
+
+            </div>
+            <div class="dash-section spacer-section">
+               
+            </div>
+            <div class="dash-section credits" >
                <div> by nick dolan </div>
                <div>©2024 <a href="https://github.com/diopsidedesign">diopside design</a></div>
-            </div>
-
-         </div> 
+            </div> 
+         </div>  
       </div>
 
       <div id="dash-handle">  
@@ -403,11 +707,20 @@
       <div id="main">  
          <div class="inner-wrapper">  
          </div> 
+      </div> 
+
+      <div class="app-wrap">
+         <div id="zoom-wrap-inner">
+            <div class="app-wrap">
+               <div id="translate-wrap-inner">
+                  <div class="app-wrap"> 
+                     <hypno-tiler reflect="6"></hypno-tiler>
+                  </div>
+               </div>
+            </div>
+         </div>
       </div>
 
-      <div id="app">
-         <hypno-tiler reflect="6"></hypno-tiler>
-      </div>
    
    </body>    
 
@@ -427,7 +740,7 @@
       const IMG_FILE_EXTENSIONS = ['jpg','jpeg','png','gif','svg','heic','webp'];
 
       function setCssProp(prop, val) {
-         document.documentElement.style.setProperty(prop, val)
+         requestAnimationFrame(()=> document.documentElement.style.setProperty(prop, val)) 
       }
 
       function readCssProp(prop) {
@@ -546,7 +859,7 @@
                target.setPointerCapture(event.pointerId) 
             }       
 
-            const rafThrottledTrack = rafThrottle((e) => { 
+            const rafThrottledTrack = rafThrottle((e) => {  
                if (options.simple === true || budged === true) { 
                   if (options.simple === true || (options.simple !== true && !(interrupt(e) === true))) {
                      if (options.track !== undefined) {
@@ -597,622 +910,738 @@
 
       })()
 
-     
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      class ShadowComponent extends HTMLElement {
+
+         constructor() {
+            super()
+            this.styleSheet = new CSSStyleSheet();             
+            this.styleText = '';
+            this.attachShadow({ mode: "open" }); 
+            this.shadowRoot.adoptedStyleSheets.push(this.styleSheet) 
+         } 
+         get template() { 
+            return this.templateEl?.innerHTML
+         }
+         set template(templateStr) {
+            if (this.template == null) {
+               this.templateEl = document.createElement('template')
+               this.templateEl.innerHTML = templateStr;
+               this.shadowRoot.appendChild(this.templateEl.content.cloneNode(true))
+            }      
+         } 
+         get styles() {
+            return this.styleText
+         }
+         set styles(styleStr) {
+            this.styleText = styleStr;
+            this.styleSheet.replaceSync(styleStr)
+         }
+      }
+  
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+   
+
+      class SimpleComponent extends HTMLElement {
+
+         static componentCount = 0;
+
+         constructor() {
+            super()           
+            SimpleComponent.componentCount+=1;
+         } 
+         get template() { 
+            return this.templateEl?.innerHTML
+         }
+         set template(templateStr) {
+            if (this.template == null) {
+               this.templateEl = document.createElement('template')
+               this.templateEl.innerHTML = templateStr;
+               this.appendChild(this.templateEl.content.cloneNode(true))
+            }      
+         } 
+      }
+
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      ;(function(){
-
-         class SymmetryButtonbar extends HTMLElement { 
-               
-            constructor() {
-
-               super() 
-          
-               this.cStyles = new CSSStyleSheet();
-             
-               this.cStyles.replaceSync(` 
-                  :host { 
-                     display: flex;
-                     width: 100%; 
-                     flex-flow: row nowrap;
-                     gap: 10px;
-                  } 
-                  :host > button {
-                     flex: 0 1 auto;
-                     margin: 0 auto;
-                     padding: .6rem;
-                     position: relative;
-                     border-radius: 5px;
-                     display: grid;
-                     z-index:1;
-                     box-shadow: inset 0 0 15px rgba(135, 135, 135, .1), 0 0 18px 3px rgba(0, 0, 0, .3);
-                     place-content: center;
-
-                  }
-                  :host > button > span {
-                     pointer-events: none;
-                     position: absolute;  
-                     font-weight: bold;
-                  }
-                  :host > button > svg {
-                     max-width: 50px;
-                     pointer-events: none;
-                     display: inline-block;  
-                     width: 100%;
-                     transition: transform 100ms ease-in-out;
-                     aspect-ratio: 1 / 1;
-                     opacity: .5;
-                  }
-                  :host > button:hover {
-                      z-index: 50;
-                  
-                  }
-             
-                  :host([reflect="4"]) button[val="4"],
-                  :host([reflect="6"]) button[val="6"],
-                  :host([reflect="8"]) button[val="8"],
-                  :host([reflect="12"]) button[val="12"] { 
-                      opacity: 1;
-                      z-index: 100;
-                      outline:1px solid white;
-                  }
-                  :host([reflect="4"]) button[val="4"] svg,
-                  :host([reflect="6"]) button[val="6"] svg,
-                  :host([reflect="8"]) button[val="8"] svg  ,
-                  :host([reflect="12"]) button[val="12"]    svg{
-                     opacity: 1;
-                  }  
-                  path {
-                     fill: black;
-                  }
-                  
-               `);
-           
-               this.attachShadow({ mode: "open" });
-                
-               this.shadowRoot.adoptedStyleSheets.push(this.cStyles)  
-
-               const svgInfo = `xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2" viewBox="0 0 100 100"`
-
-               const buttons = `
-               <button type="button" val="4"> 
-                  <svg ${svgInfo}><path d="M8.5 49.5v-41h41v41h-41Zm43 0v-41h41v41h-41Zm41 2v41h-41v-41h41Zm-43 0v41h-41v-41h41Z"/></svg> 
-               </button>
-               <button type="button" val="6"> 
-                  <svg ${svgInfo}><path d="m50 52 23 41H27l23-41Zm2-1h46L75 91 52 51Zm0-2L75 8l23 41H52Zm-2-1L27 7h46L50 48Zm-2 1H2L25 8l23 41Zm0 2L25 91 2 51h46Z"/></svg> 
-               </button>
-               <button type="button" val="8"> 
-                  <svg ${svgInfo}><path d="M8.5 91V51.6h39.6L8.5 91.1Zm39.6-41.5H8.5V9.9l39.6 39.6ZM9.9 8.5h39.6v39.6L9.9 8.5Zm41.6 39.6V8.5h39.6L51.5 48.1Zm41-38.2v39.6H52.9L92.5 9.9ZM52.9 51.5h39.6v39.6L52.9 51.5Zm38.2 41H51.5V52.9l39.6 39.6ZM49.5 52.9v39.6H9.9l39.6-39.6Z"/></svg> 
-               </button>
-               <button type="button" val="12">
-                  <svg ${svgInfo}><path d="M13.7 27.9 24.9 8.5l22.4 38.8-33.6-19.4ZM49 46.3 26.6 7.5H49v38.8Zm2-38.8h22.4L51 46.3V7.5Zm1.7 39.8L75.1 8.5l11.2 19.4-33.6 19.4Zm34.6-17.7L98.5 49H53.7l33.6-19.4ZM53.7 51h44.8L87.3 70.4 53.7 51Zm32.6 21.1L75.1 91.5 52.7 52.7l33.6 19.4ZM51 53.7l22.4 38.8H51V53.7Zm-2 38.8H26.6L49 53.7v38.8Zm-1.7-39.8L24.9 91.5 13.7 72.1l33.6-19.4ZM12.7 70.4 1.5 51h44.8L12.7 70.4ZM46.3 49H1.5l11.2-19.4L46.3 49Z"/></svg>       
-               </button>`
-
-               const tmpl = document.createElement('template')
-               tmpl.innerHTML = buttons;
-               this.shadowRoot.appendChild(tmpl.content.cloneNode(true)) 
-            }
-
-            connectedCallback() { 
-               this.setAttribute('reflect', document.querySelector('hypno-tiler').getAttribute('reflect'))
-               this.shadowRoot.addEventListener('click', e=> {
-                  this.setAttribute('reflect', e.target.getAttribute('val'))
-                  document.querySelector('hypno-tiler').setAttribute('reflect', e.target.getAttribute('val'))
+      customElements.define('value-incrementer', class extends SimpleComponent{ 
+         constructor() {
+            super();
+            this.template = `<div>  
+                  <button class="minus-button"  type="button">
+                     <svg class="minus-button" width="100%" height="100%" viewBox="0 0 64 64">
+                         <path d="M50,27L14,27C12,27 11,28 11,30L11,34C11,36 12,37 14,37L50,37C52,37 53,36 53,34L53,30C53,28 52,27 50,27Z"/>
+                     </svg>
+                  </button><button class="plus-button"  type="button">
+                     <svg class="plus-button" width="100%" height="100%" viewBox="0 0 64 64">
+                         <path d="M27,14L27,50C27,52 28,53 30,53L34,53C36,53 37,52 37,50L37,14C37,12 36,11 34,11L30,11C28,11 27,12 27,14Z"/>
+                         <path d="M50,27L14,27C12,27 11,28 11,30L11,34C11,36 12,37 14,37L50,37C52,37 53,36 53,34L53,30C53,28 52,27 50,27Z"/>
+                     </svg>  
+                  </button>${this.hasAttribute('show-reset') ? ` 
+                  <button class="reset-button"  type="button">
+                        <svg class="reset-button" viewBox="0 0 32 32">
+                           <path d="M9.2 14c1-4 4-7 8.3-7a9 9 0 0 1 0 18c-2.4 0-4.4-1-6-2.5l-3 3.5a14 14 0 0 0 9 3.5 13.5 13.5 0 0 0 0-27A13 13 0 0 0 4.6 14H0l7 8 7-8H9.2Z"/>
+                        </svg> 
+                     </button>` : ``}</div>`
+         }
+         connectedCallback() {
+            const detail = { value: 0 }
+            this.event = new CustomEvent('increment', { detail, bubbles: true, composed: true })
+            this.querySelectorAll('button').forEach(btnEl=> {
+               btnEl.addEventListener('click', e=> {
+                  detail.value = btnEl.getAttribute('class').split('-')[0];
+                  this.dispatchEvent(this.event);
                })
-            } 
+            }) 
          }
+      })
 
-         customElements.define("symmetry-buttonbar", SymmetryButtonbar);
-
-      })()
-
+ 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
 
+      customElements.define('range-input', class extends SimpleComponent{
 
-      ;(function(){
+         constructor() { super()
+ 
 
-         function createTileGroupMarkup(nTiles) { 
-            let tileGroupMarkup = `<div class="tile-group">`
-            for (let i=0; i<nTiles; i++) {
-               tileGroupMarkup += `<div class="tri"></div>`
+            this.min = Number(this.getAttribute('min') ?? 0)
+            this.max = Number(this.getAttribute('max') ?? 100)
+            this.step = Number(this.getAttribute('step') ?? 1)
+            this.currentValue = Number(this.getAttribute('value') ?? 0)
+            this.unit = this.getAttribute('unit') ?? ''
+            this.originalValue = this.currentValue;
+
+            this.template =` 
+               <label for="range-input"></label>
+               <input name="range-input"
+                      type ="range" 
+                      min  ="${this.min}"
+                      max  ="${this.max}"
+                      step ="${this.step}"
+                      value="${this.currentValue}" />
+               <span>${this.currentValue + this.unit}</span>
+               <value-incrementer show-reset></value-incrementer>`; 
+         } 
+
+         connectedCallback() {
+ 
+            this.valueDisplay = this.querySelector('span');
+            this.inputEl      = this.querySelector('input');
+
+            this.inputEl.id = this.tagName.toLowerCase() + SimpleComponent.componentCount;
+            this.querySelector('label').setAttribute('for',this.tagName.toLowerCase() + SimpleComponent.componentCount)
+
+            if (this.hasAttribute('label')) {
+               this.querySelector('label').innerHTML = this.getAttribute('label')
             }
-            tileGroupMarkup += `</div>`;
-            return tileGroupMarkup
-         }
-         function createTileColumnNode(nGroups) {  
-            const tmpl = document.createElement('template')
-            let txt = `<div class="tile-column">` 
-            for (let i=0; i<nGroups; i++) {
-               txt += createTileGroupMarkup(12)
-            } 
-            txt += '</div>'
-            tmpl.innerHTML = txt
-            return tmpl.content.cloneNode(true)
-         }
 
-         class HypnotilerApp extends HTMLElement {
-          
-            constructor() {
+            const detail = { value: Number(this.getAttribute('value') ?? "0"), from: 'input' }
 
-               super() 
-          
-               this.cStyles = new CSSStyleSheet(); 
+            this.event = new CustomEvent('range-change', { composed: true, bubbles: true, detail })
 
-               this.cStyles.replaceSync(` 
-
-                  :host { 
-                     display: block;
-                     width: min-content;                     
-                     margin: 0 auto;
-                     white-space: nowrap; 
-                     transform-origin: center center;
-                     transform: var(--canvas-rotation);
-                  }  
-
-                   .offset-wrapper {
-                     position: relative;
-                     left: calc(var(--tile-width) / 6); 
-                  }
-
-                  :host([reflect="6"]), :host([reflect="12"]) {
-                     --hex-width:      calc(var(--tile-width) * calc(4 / 3));
-                     --hex-halfheight: calc(calc(var(--hex-width) * cos(30deg)) / 2) ;
-                     --tri-size:       calc(var(--tile-width) * calc(2 / 3));
-                  }
-                 
-                  :host([reflect="4"]), :host([reflect="8"]) {
-                     --tri-size: calc(var(--tile-width) / 2);
-                  }
-
-                  .tile-column {  
-                     display: inline-block;
-                     position: relative;
-                  }  
-
-                  .tile-group {
-                     transform: rotateZ(0); 
-                     width: var(--tile-width) ;
-                  }  
-                  
-                  .tri {
-                     height: var(--tri-size);
-                     width: var(--tri-size); 
-                     position: absolute;  
-                     z-index:1;
-                  }  
-
-                  .tri:before {
-                     z-index:-1;
-                     content: "";
-                     position: absolute; 
-                     height: calc(var(--tri-size) + 50%);
-                     width:  calc(var(--tri-size) + 50%); 
-                     top: -25%;
-                     left: -25%; 
-                     background:          var(--init-image-url);   
-                     background-position: var(--image-position); 
-                     background-size:        var(--image-scale);
-                     transform:           var(--image-rotation); 
-                     filter:                 var(--hue-rotation);
-                  }
-
-                  :host([reflect="4"]) { 
-                   
-                     .tile-group {     
-                        width: var(--tile-width);
-                        height: var(--tile-width);   
-                     }
-
-                     .tri {  
-                        transform-origin: bottom right;
-                        
-                        clip-path: polygon(
-                           -0.5px -0.5px,
-                           -0.5px calc(100% + 0.5px),
-                           calc(100% + 0.5px) calc(100% + 0.5px),
-                           calc(100% + 0.5px) -0.5px
-                        );
-                     }  
-
-                     .tri:nth-child(1)  { }
-                     .tri:nth-child(2)  {  transform: scaleY(-1);  }
-                     .tri:nth-child(3)  {  transform: scaleX(-1) scaleY(-1); }
-                     .tri:nth-child(4)  {  transform: scaleX(-1);  }
-                     .tri:nth-child(5), .tri:nth-child(6), .tri:nth-child(7),
-                     .tri:nth-child(8), .tri:nth-child(9), .tri:nth-child(10),
-                     .tri:nth-child(11), .tri:nth-child(12) { 
-                        display: none;
-                     }
-                  } 
-
-                  :host([reflect="6"]) { 
-                   
-                     .tile-column:nth-child(even) {  
-                        top: calc(calc(var(--hex-halfheight) * -1));  
-                     }  
-
-                     .tile-group {   
-                        height:      var(--hex-halfheight);  
-                        padding-top: var(--hex-halfheight);
-                     }
-
-                     .tri {  
-                        transform-origin: top center;
-                        clip-path: polygon(
-                           calc(50% + .5px) 0,
-                           calc(50% - .5px) 0,
-                           0px 86%,
-                           0px calc(86.6% + 1px),
-                           100% calc(86.6% + 1px),
-                           100% 86%
-                        );  
-                     }  
-
-                     .tri:nth-child(1) { }
-                     .tri:nth-child(2) {  transform: rotate(60deg) scaleX(-1);  }
-                     .tri:nth-child(3) {  transform: rotate(120deg); }
-                     .tri:nth-child(4) {  transform: rotate(180deg) scaleX(-1); }
-                     .tri:nth-child(5) {  transform: rotate(240deg); }
-                     .tri:nth-child(6) {  transform: rotate(-60deg) scaleX(-1); } 
-                     .tri:nth-child(7), .tri:nth-child(8), .tri:nth-child(9),
-                     .tri:nth-child(10), .tri:nth-child(11), .tri:nth-child(12) {
-                        display: none;
-                     } 
-                  } 
-                   
-                  :host([reflect="8"]) { 
-
-                     .tile-group {    
-                        height: var(--tile-width);   
-                     }
-
-                     .tri {  
-                        transform-origin: bottom right;
-                        clip-path: polygon(
-                           -0.5px -0.5px,
-                           calc(100% + 0.5px) -0.5px,
-                           calc(100% + 0.5px) calc(100% + 0.5px),
-                           calc(100% - 0.5px) calc(100% + 0.5px),
-                           -0.5px 0
-                        ); 
-                     } 
-
-                     .tri:nth-child(1) { }
-                     .tri:nth-child(2) { transform: translateX(0%) scaleX(-1); }
-                     .tri:nth-child(3) { transform: rotate(180deg); }
-                     .tri:nth-child(4) { transform: rotate(180deg) scaleX(-1); }
-                     .tri:nth-child(5) { transform: rotate(270deg)  ;}
-                     .tri:nth-child(6) { transform: rotate(270deg) scaleX(-1); }
-                     .tri:nth-child(7) { transform: rotate(90deg); } 
-                     .tri:nth-child(8) { transform: rotate(90deg) scaleX(-1); } 
-                     .tri:nth-child(9),  .tri:nth-child(10),
-                     .tri:nth-child(11), .tri:nth-child(12) {
-                        display: none;
-                     } 
-                  }
-
-                  :host([reflect="12"]) {  
-
-                     .tile-column:nth-child(even) {  
-                        top: calc(var(--hex-halfheight) * -1);  
-                     }  
-
-                     .tile-group {   
-                        height:      var(--hex-halfheight);  
-                        padding-top: var(--hex-halfheight);
-                     }
-
-                     .tri {  
-                        width: calc(var(--tri-size) / 2);
-                        transform-origin: top right;
-
-                        clip-path: polygon(
-                           calc(100% + 0.5px) 0,
-                           calc(100% + 0.5px) calc(86.6% + 0.5px),
-                           -0.5px calc(86.6% + 0.5px),
-                           -0.5px 86.6%, 
-                           calc(100% - 0.5px) 0
-                        );  
-                     }  
-
-                     .tri:nth-child(1)  { }
-                     .tri:nth-child(2)  {  transform: scaleX(-1); }
-                     .tri:nth-child(3)  {  transform: rotate(60deg) scaleX(-1); }
-                     .tri:nth-child(4)  {  transform: rotate(-60deg); }
-                     .tri:nth-child(5)  {  transform: rotate(60deg); } 
-                     .tri:nth-child(6)  {  transform: scaleX(-1) rotate(60deg); } 
-                     .tri:nth-child(8)  {  transform: scaleY(-1); } 
-                     .tri:nth-child(7)  {  transform: scaleY(-1) scaleX(-1); } 
-                     .tri:nth-child(9)  {  transform: scaleY(-1) rotate(60deg); } 
-                     .tri:nth-child(10) {  transform: scaleY(-1) rotate(60deg) scaleX(-1);  } 
-                     .tri:nth-child(11) {  transform: scaleY(-1) rotate(-60deg);  } 
-                     .tri:nth-child(12) {  transform: scaleY(-1) rotate(-60deg) scaleX(-1); } 
-                  }
-               `) 
-
-               this.attachShadow({ mode: "open" });
-                
-               this.shadowRoot.adoptedStyleSheets.push(this.cStyles)  
-
-               let offsetWrap = document.createElement('div')
-               offsetWrap.classList.add('offset-wrapper')  
-               for (let i=0; i<12; i++) {
-                  offsetWrap.appendChild(createTileColumnNode(12))
-               } 
-               this.shadowRoot.appendChild(offsetWrap)
-            } 
-         }
-
-         customElements.define("hypno-tiler", HypnotilerApp);
-
-      })()
+            const setNewVal = (val,from) => {
+               detail.value = val;
+               detail.from  = from;
+               this.currentValue = val;
+               this.inputEl.value = val;
+               this.valueDisplay.innerHTML = val + this.unit;
+               this.dispatchEvent(this.event);
+            }
+            this.querySelector('input').addEventListener('input', e => {  
+               setNewVal(Number(e.originalTarget?.value ?? e.target.value), 'input') 
+            })
+            this.querySelector('value-incrementer').addEventListener('increment', e=> { 
+               if (e.detail.value === 'reset') {
+                  setNewVal(this.originalValue, 'increment')
+               } else {
+                  setNewVal(Math.max(this.min, Math.min(this.max, this.currentValue + (e.detail.value==='plus'? this.step : -this.step ))), 'increment')    
+               }               
+            })
+         } 
+      })
+ 
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      ;(function(){
 
-         async function ifUrlExist(url) {
-            return new Promise((resolve, reject) => { 
-               fetch(url, { method: "HEAD"}).then(response => {
-                  resolve(response.status.toString()[0] === "2")
-                  }).catch(error => { reject(false) }) 
+      customElements.define('fancy-checkbox', class extends SimpleComponent {
+
+         constructor() {
+            super()
+            this.template = `<input type="checkbox" name="fancy-checkbox-input"/>
+               <svg class="checkmark-graphic" viewBox="0 0 32 32">
+                  <path d="M3 22c-1-1-.5-1.3 0-2l1-1c.5-.5 1.5-.5 2 0l5 4s1 1 2 0L26 2c.3-.5.5-.3 1 0l2 1c1 .5.5 1 0 2L14 30c-.5.5-1.5.5-2 0l-9-8Z"/>
+               </svg>`;
+         }
+
+         connectedCallback() { 
+            const detail = { toggle: this.hasAttribute('checked') }
+            if (this.hasAttribute('checked')){
+               this.querySelector('input').checked = true;
+               this.removeAttribute('checked')
+            }
+            this.event = new CustomEvent('toggle-check', { detail, bubbles: true, composed: true })
+            this.querySelector('input').addEventListener('click', e=> {
+               detail.toggle = e.target.checked
+               this.dispatchEvent(this.event);
             })
          }
+      })
 
-         class ImageUploader extends HTMLElement {
-          
-            constructor() {
 
-               super() 
-          
-               this.cStyles = new CSSStyleSheet(); 
 
-               this.cStyles.replaceSync(`  
-
-                  svg {
-                     fill-rule: evenodd;
-                     clip-rule: evenodd;
-                     stroke-linejoin: round;
-                     stroke-miterlimit: 2;
-                  } 
-
-                  label {
-                     font: sans-serif;
-
-                  }
-                  input[type="file"],input[type="url"] {
-                     margin-top: .25rem;
-                  }
-                  :host {
-                     text-align: center;
-                     overflow: hidden;
-               
-                     display: grid;
-                     place-content: center;
-                     position: relative; 
-                     width: 100%;
-                     height: 100%;
-                     margin: 0 auto;    
-                     cursor: pointer;
-                     z-index: 1;
-                  }
-
-                  input[type="file"] {
-                     position: relative;
-                     width: 100%;
-
-                  }
-             
-                   :host(:hover) img#preview-image-element,
-                   :host(.selecting) img#preview-image-element { 
-                     filter: brightness(50%); 
-                  }  
-             
-                  img#preview-image-element {  
-                     box-sizing: border-box;
-                     position: relative;
-                     content: var(--init-image-url);   
-                     width: 100%;
-                     height: calc(300px - 3rem); 
-                  }
-                  img#preview-image-element.drag-ready {
-                     filter: brightness(150%);
-                  }
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
  
-                  #preview-frame-graphic { 
-                     align-self: center;
-                     justify-self: center; 
-                  
-                     position: absolute; 
-                     z-index: 100;  
-                     opacity: 0; 
-                  }
+      customElements.define('hypno-tiler', (()=> {
 
-                  :host(:hover){ 
-                     outline: 2px dotted white;
-                  }
-
-                  :host(:hover) #preview-frame-graphic {
-                     opacity: 1 
-                  } 
-
-                  #preview-frame-graphic > svg { 
-                     width: 50%;
-                     margin: auto;
-                     fill: white;
-                  }
-
-                  .image-submit-wrapper {
-                     display: grid;
-                     place-content: center;
-                     height: 100%;
-                     position: absolute; 
-                     z-index: 100; 
-                     opacity: 1;
-                  } 
-
-                  :host(.selecting) #preview-frame-graphic {
-                     pointer-events: none;
-                     opacity: 0!important;
-                  } 
-                  :host(.selecting) .image-submit-wrapper {
-                     visibility: visible;
-                  }   
-                  :host(:not(.selecting)) .image-submit-wrapper {
-                     visibility: hidden;
-                  } 
-                  .img-submit-inner {
-                     padding: 1rem;
-                     align-self: center;
-                     justify-self: center; 
-                  }
-                  .img-submit-group.cancel {
-
-                     margin-top: 2rem;
-                  }
-               `) 
-
-               this.attachShadow({ mode: "open" });
-                
-               this.shadowRoot.adoptedStyleSheets.push(this.cStyles)   
-
+            function createTileGroupMarkup(nTiles) { 
+               let tileGroupMarkup = `<div class="tile-group">`
+               for (let i=0; i<nTiles; i++) {
+                  tileGroupMarkup += `<div class="tri"></div>`
+               }
+               tileGroupMarkup += `</div>`;
+               return tileGroupMarkup
+            }
+            function createTileColumnNode(nGroups) {  
                const tmpl = document.createElement('template')
+               let txt = `<div class="tile-column">` 
+               for (let i=0; i<nGroups; i++) {
+                  txt += createTileGroupMarkup(12)
+               } 
+               txt += '</div>'
+               tmpl.innerHTML = txt
+               return tmpl.content.cloneNode(true)
+            }
 
-               tmpl.innerHTML =
-                  `
-                 
-                  <div class="image-submit-wrapper">
+            return class extends ShadowComponent {
 
-                     <div class="img-submit-inner">
+               static observedAttributes = ['num-rows','num-columns'] 
+               constructor() {
+                  super()
+                  this.styles = `  
+                     :host {                         
+                        display: block;
+                        width: min-content;                     
+                        margin: 0 auto;
+                        white-space: nowrap; 
+                        transform-origin: center center;
+                     }  
 
-                        <div class="img-submit-group">
-                           <label for="file-input-element">Choose file to upload</label>
-                           <input type="file" id="file-input-element" name="file" accept="image/*" /> 
-                        </div> 
+                     :host([reflect="6"]), :host([reflect="12"]) {
+                        --hex-width:      calc(var(--tile-width) * calc(4 / 3));
+                        --hex-halfheight: calc(calc(var(--hex-width) * cos(30deg)) / 2) ;
+                        --tri-size:       calc(var(--tile-width) * calc(2 / 3));
+                     }
+                    
+                     :host([reflect="4"]), :host([reflect="8"]) {
+                        --tri-size: calc(var(--tile-width) / 2);
+                     }
 
-                        <p> OR </p>
+                     .tile-column {  
+                        display: inline-block;
+                        position: relative;
+                     }  
 
-                        <div class="img-submit-group">
-                           <label for="url-input-element">Enter image URL</label>
-                           <input type="url" id="url-input-element"/> 
-                           <button title="Load Image Url" type="button" id="url-input-submit">Load</button>
-                        </div> 
+                     .tile-group {
+                        transform: rotateZ(0);  
 
-                        <div class="cancel img-submit-group"> 
-                           <button title="Cancel Load New Image" type="button" id="img-load-cancel">Cancel</button>
-                        </div> 
+                        width: var(--tile-width) ;
+                     }  
+                     
+                     .tri {
+                        height: var(--tri-size);
+                        width: var(--tri-size); 
+                        position: absolute;  
+                        z-index:1;
+                     }  
+
+                     .tri:before {
+                        z-index:-1;
+                        content: "";
+                        position: absolute; 
+                        height: calc(var(--tri-size) + 50%);
+                        width:  calc(var(--tri-size) + 50%); 
+                        top: -25%;
+                        left: -25%; 
+                        background:          var(--image-url);   
+                        background-position: var(--image-position); 
+                        background-size:        var(--image-scale);
+                        transform:           var(--image-rotation); 
+                     }
+
+                     :host([reflect="4"]) { 
+                      
+                        .tile-group {     
+                           width: var(--tile-width);
+                           height: var(--tile-width);   
+                        }
+
+                        .tri {  
+                           transform-origin: bottom right;
+                           
+                           clip-path: polygon(
+                              -0.5px -0.5px,
+                              -0.5px calc(100% + 0.5px),
+                              calc(100% + 0.5px) calc(100% + 0.5px),
+                              calc(100% + 0.5px) -0.5px
+                           );
+                        }  
+
+                        .tri:nth-child(1)  { }
+                        .tri:nth-child(2)  {  transform: scaleY(-1);  }
+                        .tri:nth-child(3)  {  transform: scaleX(-1) scaleY(-1); }
+                        .tri:nth-child(4)  {  transform: scaleX(-1);  }
+                        .tri:nth-child(5), .tri:nth-child(6), .tri:nth-child(7),
+                        .tri:nth-child(8), .tri:nth-child(9), .tri:nth-child(10),
+                        .tri:nth-child(11), .tri:nth-child(12) { 
+                           display: none;
+                        }
+                     } 
+
+                     :host([reflect="6"]) { 
+                      
+                        .tile-column:nth-child(even) {  
+                           top: calc(calc(var(--hex-halfheight) * -1));  
+                        }  
+
+                        .tile-group {   
+                           height:      var(--hex-halfheight);  
+                           padding-top: var(--hex-halfheight);
+                        }
+
+                        .tri {  
+                           transform-origin: top center;
+                           clip-path: polygon(
+                              calc(50% + .5px) 0,
+                              calc(50% - .5px) 0,
+                              0px 86%,
+                              0px calc(86.6% + 1px),
+                              100% calc(86.6% + 1px),
+                              100% 86%
+                           );  
+                        }  
+
+                        .tri:nth-child(1) { }
+                        .tri:nth-child(2) {  transform: rotate(60deg) scaleX(-1);  }
+                        .tri:nth-child(3) {  transform: rotate(120deg); }
+                        .tri:nth-child(4) {  transform: rotate(180deg) scaleX(-1); }
+                        .tri:nth-child(5) {  transform: rotate(240deg); }
+                        .tri:nth-child(6) {  transform: rotate(-60deg) scaleX(-1); } 
+                        .tri:nth-child(7), .tri:nth-child(8), .tri:nth-child(9),
+                        .tri:nth-child(10), .tri:nth-child(11), .tri:nth-child(12) {
+                           display: none;
+                        } 
+                     } 
+                      
+                     :host([reflect="8"]) { 
+
+                        .tile-group {    
+                           height: var(--tile-width);   
+                        }
+
+                        .tri {  
+                           transform-origin: bottom right;
+                           clip-path: polygon(
+                              -0.5px -0.5px,
+                              calc(100% + 0.5px) -0.5px,
+                              calc(100% + 0.5px) calc(100% + 0.5px),
+                              calc(100% - 0.5px) calc(100% + 0.5px),
+                              -0.5px 0
+                           ); 
+                        } 
+
+                        .tri:nth-child(1) { }
+                        .tri:nth-child(2) { transform: translateX(0%) scaleX(-1); }
+                        .tri:nth-child(3) { transform: rotate(180deg); }
+                        .tri:nth-child(4) { transform: rotate(180deg) scaleX(-1); }
+                        .tri:nth-child(5) { transform: rotate(270deg)  ;}
+                        .tri:nth-child(6) { transform: rotate(270deg) scaleX(-1); }
+                        .tri:nth-child(7) { transform: rotate(90deg); } 
+                        .tri:nth-child(8) { transform: rotate(90deg) scaleX(-1); } 
+                        .tri:nth-child(9),  .tri:nth-child(10),
+                        .tri:nth-child(11), .tri:nth-child(12) {
+                           display: none;
+                        } 
+                     }
+
+                     :host([reflect="12"]) {  
+
+                        .tile-column:nth-child(even) {  
+                           top: calc(var(--hex-halfheight) * -1);  
+                        }  
+
+                        .tile-group {   
+                           height:      var(--hex-halfheight);  
+                           padding-top: var(--hex-halfheight);
+                        }
+
+                        .tri {  
+                           width: calc(var(--tri-size) / 2);
+                           transform-origin: top right;
+
+                           clip-path: polygon(
+                              calc(100% + 0.5px) 0,
+                              calc(100% + 0.5px) calc(86.6% + 0.5px),
+                              -0.5px calc(86.6% + 0.5px),
+                              -0.5px 86.6%, 
+                              calc(100% - 0.5px) 0
+                           );  
+                        }  
+
+                        .tri:nth-child(1)  { }
+                        .tri:nth-child(2)  {  transform: scaleX(-1); }
+                        .tri:nth-child(3)  {  transform: rotate(60deg) scaleX(-1); }
+                        .tri:nth-child(4)  {  transform: rotate(-60deg); }
+                        .tri:nth-child(5)  {  transform: rotate(60deg); } 
+                        .tri:nth-child(6)  {  transform: scaleX(-1) rotate(60deg); } 
+                        .tri:nth-child(8)  {  transform: scaleY(-1); } 
+                        .tri:nth-child(7)  {  transform: scaleY(-1) scaleX(-1); } 
+                        .tri:nth-child(9)  {  transform: scaleY(-1) rotate(60deg); } 
+                        .tri:nth-child(10) {  transform: scaleY(-1) rotate(60deg) scaleX(-1);  } 
+                        .tri:nth-child(11) {  transform: scaleY(-1) rotate(-60deg);  } 
+                        .tri:nth-child(12) {  transform: scaleY(-1) rotate(-60deg) scaleX(-1); } 
+                     }`;
+
+                  this.template = ``;
+               }
+               connectedCallback() {   
+                  for (let i=0; i<((window.innerWidth / 240)+2); i++) {
+                     this.shadowRoot.appendChild(createTileColumnNode(((window.innerHeight / 240)+2)))
+                  }  
+               }
+               createTileGroup() {
+                  const tmpl = document.createElement('template')
+                  tmpl.innerHTML = createTileGroupMarkup(12)
+                  return tmpl.content.cloneNode(true)
+               }
+               attributeChangedCallback(attr, oldVal, newVal) { 
+                  if (attr === 'num-rows') { 
+                     if (oldVal != null) {
+                        if (oldVal > newVal) {
+                           [...this.shadowRoot.querySelectorAll('.tile-column')].forEach(col=> {
+                              [...col.children].at(-1).remove()
+                           })
+                        } else if (newVal > oldVal) {
+                           [...this.shadowRoot.querySelectorAll('.tile-column')].forEach(col=> {
+                              col.appendChild(this.createTileGroup())
+                           }) 
+                        }
+                     } 
+                  }
+                  else if (attr === 'num-columns') {
+                     if (oldVal != null) {
+                        if (oldVal > newVal) {
+                           [...this.shadowRoot.querySelectorAll('.tile-column')].at(-1).remove()
+                        } else if (newVal > oldVal) {
+                           this.shadowRoot.appendChild(createTileColumnNode(Number(this.getAttribute('num-rows'))))
+                        }
+                     } 
+                  }
+               }
+            }
+
+         })())
+ 
+ 
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+
+         customElements.define('image-uploader', (()=> {
+
+            async function ifUrlExist(url) {
+               return new Promise((resolve, reject) => { 
+                  fetch(url, { method: "HEAD"}).then(response => {
+                     resolve(response.status.toString()[0] === "2")
+                     }).catch(error => { reject(false) }) 
+               })
+            }
+
+            return class extends ShadowComponent{
+               constructor() { super();
+                  this.styles = `  
+
+                     :host {
+                        text-align: center;
+                        overflow: hiden;
+                        outline: 2px dotted rgba(255,255,255,.5);
+                        display: grid;
+                        place-content: center;
+                        position: relative; 
+                        width: calc(100% - 1rem);
+                        height: calc(100% - 2rem);
+
+                        margin: 0 auto;    
+                        cursor: pointer;
+                        z-index: 1;
+                     }
+
+                     svg {
+                        fill-rule: evenodd;
+                        clip-rule: evenodd;
+                        stroke-linejoin: round;
+                        stroke-miterlimit: 2;
+                     } 
+                     p{
+                        margin:0;
+                     }
+
+                     button:not([menu]),
+                     input[type="file"]  {
+                        appearance: none;
+                        color: white;
+                        cursor: pointer;  
+                        position: relative;   
+                        display: inline-block;
+                        vertical-align: middle;
+                        padding:.3rem;
+                         
+                        max-height: 3rem;
+                        background-color: rgb(255 255 255 / .1);
+                        border-radius: .2rem;
+                        outline: 0.1rem solid rgb(0 0 0 / .1); 
+                        box-shadow: rgb(0 0 0 / .4)       -1px -1px 1px 1px inset,
+                                    rgb(255 255 255 / .1)  1px  1px 1px 1px inset; 
+                     }
+                      input[type="file"] {
+                        margin: 0 0;
+                        padding: .3rem 0 .3rem 0;
+                         display:block;
+                        width: calc(100% - 14rem);
+                      }
+                     input[type="url"] {
+                        background: rgb(255 255 255 / .2);
+                     }
+                     button:not([menu]):active,
+                     button:not([menu])[active],
+                     input[type="file"]:active  {
+                        box-shadow: rgb(0 0 0 / .4)         1px  1px 1px 1px inset,
+                                    rgb(255 255 255 / .1)  -1px -1px 1px 1px inset; 
+                        background-color: rgb(0 0 0 / .1);
+                     }
+
+                     label {
+                        font: sans-serif;
+
+                     }
+                     input[type="file"],input[type="url"] {
+                        margin-top: .25rem;
+                     }
+                     
+
+                     input[type="file"] {
+                        position: relative;
+                        width: 100%;
+
+                     }
+                
+                      :host(:hover) img#preview-image-element,
+                      :host(.selecting) img#preview-image-element { 
+                        filter: brightness(50%); 
+                     }  
+                
+                     img#preview-image-element {  
+                        box-sizing: border-box;
+                        position: relative;
+                        content: var(--image-url);   
+                        width: 100%;
+                        height: calc(300px - 3rem); 
+                     }
+                     img#preview-image-element.drag-ready {
+                        filter: brightness(150%);
+                     }
+    
+                     #preview-frame-graphic { 
+                        align-self: center;
+                        justify-self: center; 
+                     
+                        position: absolute; 
+                        z-index: 100;  
+                        opacity: 0; 
+                     }
+
+                     :host(:hover){ 
+                        outline: 2px dotted white;
+                     }
+
+                     :host(:hover) #preview-frame-graphic {
+                        opacity: .7;
+                     } 
+
+                     #preview-frame-graphic > svg { 
+                        width: 50%;
+                        margin: auto;
+                        fill: white;
+                     }
+
+                     .image-submit-wrapper {
+                        display: grid;
+                        place-content: center;
+                        height: 100%;
+                        width: 100%;
+                        position: absolute; 
+                        z-index: 100; 
+                        opacity: 1;
+                     } 
+
+                     :host(.selecting) #preview-frame-graphic {
+                        pointer-events: none;
+                        opacity: 0!important;
+                     } 
+                     :host(.selecting) .image-submit-wrapper {
+                        visibility: visible;
+                     }   
+                     :host(:not(.selecting)) .image-submit-wrapper {
+                        visibility: hidden;
+                     } 
+                     .img-submit-inner {
+                        padding: 1rem;
+                        align-self: center;
+                        justify-self: center; 
+                     }
+                     .img-submit-group.cancel {
+
+                        margin-top: 2rem;
+                     }
+                  `;
+
+                  this.template =  `
+                    
+                     <div class="image-submit-wrapper">
+
+                        <div class="img-submit-inner">
+
+                           <div class="img-submit-group">
+                              <label for="file-input-element">Choose file to upload</label>
+                              <input type="file" id="file-input-element" name="file" accept="image/*" /> 
+                           </div> 
+
+                           <p> OR </p>
+
+                           <div class="img-submit-group">
+                              <label for="url-input-element">Enter image URL</label>
+                              <input type="url" id="url-input-element"/> 
+                              <button title="Load Image Url" type="button" id="url-input-submit">Load</button>
+                           </div> 
+
+                           <div class="cancel img-submit-group"> 
+                              <button title="Cancel Load New Image" type="button" id="img-load-cancel">Cancel</button>
+                           </div> 
+
+                        </div>
 
                      </div>
 
-                  </div>
+                   <div id="preview-frame-graphic">
+                        <svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 120 120">
+                           <path d="M77 111H25A16 16 0 0 1 9 95V25A16 16 0 0 1 25 9h70a16 16 0 0 1 16 16v52a24 24 0 0 0-2-1.7V25a14 14 0 0 0-14-14H25a14 14 0 0 0-14 14v62l20-19 20 17 27-29 10.5 14.6A24 24 0 0 0 77.1 111Z"/>
+                           <circle cx="38" cy="36" r="13"/>
+                           <path d="M94 72.6a21.4 21.4 0 1 1 0 42.8 21.4 21.4 0 0 1 0-42.8Zm-2.5 23.9v6.5c0 .8.7 1.5 1.5 1.5h2c.8 0 1.5-.7 1.5-1.5v-6.5h6.5c.8 0 1.5-.7 1.5-1.5v-2c0-.8-.7-1.5-1.5-1.5h-6.5V85c0-.8-.7-1.5-1.5-1.5h-2c-.8 0-1.5.7-1.5 1.5v6.5H85c-.8 0-1.5.7-1.5 1.5v2c0 .8.7 1.5 1.5 1.5h6.5Z"/>
+                        </svg> 
+                     </div>  
 
-                <div id="preview-frame-graphic">
-                     <svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 120 120">
-                        <path d="M77 111H25A16 16 0 0 1 9 95V25A16 16 0 0 1 25 9h70a16 16 0 0 1 16 16v52a24 24 0 0 0-2-1.7V25a14 14 0 0 0-14-14H25a14 14 0 0 0-14 14v62l20-19 20 17 27-29 10.5 14.6A24 24 0 0 0 77.1 111Z"/>
-                        <circle cx="38" cy="36" r="13"/>
-                        <path d="M94 72.6a21.4 21.4 0 1 1 0 42.8 21.4 21.4 0 0 1 0-42.8Zm-2.5 23.9v6.5c0 .8.7 1.5 1.5 1.5h2c.8 0 1.5-.7 1.5-1.5v-6.5h6.5c.8 0 1.5-.7 1.5-1.5v-2c0-.8-.7-1.5-1.5-1.5h-6.5V85c0-.8-.7-1.5-1.5-1.5h-2c-.8 0-1.5.7-1.5 1.5v6.5H85c-.8 0-1.5.7-1.5 1.5v2c0 .8.7 1.5 1.5 1.5h6.5Z"/>
-                     </svg> 
-                  </div>  
+                     <img id="preview-image-element" class="preview-image" >`;
 
-                  <img id="preview-image-element" class="preview-image" >`;
 
-               this.shadowRoot.appendChild(tmpl.content.cloneNode(true))  
-            } 
+               }
+               get selecting() { 
+                  return this.classList.contains('selecting') 
+               }
+               set selecting(val) {  
+                  
+                  if (val == false) {
+                     this.classList.remove('selecting') 
+                  } else if (val==true) { 
+                     this.classList.add('selecting') 
+                  }  
+               } 
 
-            get selecting() { 
-               return this.classList.contains('selecting') 
-            }
-            set selecting(val) {  
-               
-               if (val == false) {
-                  this.classList.remove('selecting') 
-               } else if (val==true) { 
-                  this.classList.add('selecting') 
-               }  
-            } 
+               connectedCallback() {
 
-            connectedCallback() {
+                  this.selecting = false;
+    
+                  this.fileInputEl = this.shadowRoot.querySelector('#file-input-element')
+                  this.prevImgEl = this.shadowRoot.querySelector('#preview-image-element')
+                  this.urlInputEl = this.shadowRoot.querySelector('#url-input-element')
+                  this.checkbox = this.shadowRoot.querySelector('input[type="checkbox"]')
 
-               this.selecting = false;
- 
-               this.fileInputEl = this.shadowRoot.querySelector('#file-input-element')
-               this.prevImgEl = this.shadowRoot.querySelector('#preview-image-element')
-               this.urlInputEl = this.shadowRoot.querySelector('#url-input-element')
-               this.checkbox = this.shadowRoot.querySelector('input[type="checkbox"]')
+                  this.shadowRoot.addEventListener('click', e=> {
+                     e.stopPropagation()
+                     if (this.selecting === false) { this.selecting = true }
+                  })
 
-               this.shadowRoot.addEventListener('click', e=> {
-                  e.stopPropagation()
-                  if (this.selecting === false) { this.selecting = true }
-               })
-
-               this.fileInputEl.addEventListener('change', e=> { 
-                  const file = this.fileInputEl.files[0]
-                  if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(1))) { 
-                     let url=URL.createObjectURL(file)
-                     this.selecting = false;
-                     setCssProp('--init-image-url', 'url('+url+')')
-                  }
-               }) 
-
-               this.shadowRoot.querySelector('#url-input-submit').addEventListener('click', async e=> { 
-
-                  const currVal = this.urlInputEl.value,
-                        extens  = currVal.split('.').at(-1)
-
-                  if (currVal.startsWith('http') && extens && IMG_FILE_EXTENSIONS.includes(extens)) { 
-                     try {
-                        const urlValid = await ifUrlExist(currVal)
-                        if (urlValid) {
-                           this.selecting = false;
-                           setCssProp('--init-image-url', 'url('+this.urlInputEl.value+')') 
-                        }
+                  this.fileInputEl.addEventListener('change', e=> { 
+                     const file = this.fileInputEl.files[0]
+                     if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(1))) { 
+                        let url=URL.createObjectURL(file)
+                        this.selecting = false;
+                        setCssProp('--image-url', 'url('+url+')')
                      }
-                     catch(error) {
-                        console.log('error caught')
-                     }
-                  } 
-               }) 
- 
-               this.addEventListener('dragover', e=> e.preventDefault())
+                  }) 
 
-               this.addEventListener('dragenter', e=> {
-                   e.preventDefault()
-                  //this.prevImgEl.classList.add('drag-ready') 
-                  //setTimeout(()=> {
-                   //  this.prevImgEl.classList.remove('drag-ready') 
-                  //}, 300)
-               }) 
-               this.addEventListener('drop', e=> {  
-                  console.log("drop event")
-                  e.preventDefault();    
-                  [...e.dataTransfer.items] 
-                     .filter( x => x.kind === 'file')
-                     .forEach( async blob => {   
+                  this.shadowRoot.querySelector('#url-input-submit').addEventListener('click', async e=> { 
 
-                        const file = await blob.getAsFile()  
-                        console.log(file.name)
-                        if (file.name.split('.').at(-1)) { 
-                           setCssProp('--init-image-url', 'url('+URL.createObjectURL(file)+')')
+                     const currVal = this.urlInputEl.value,
+                           extens  = currVal.split('.').at(-1)
+
+                     if (currVal.startsWith('http') && extens && IMG_FILE_EXTENSIONS.includes(extens)) { 
+                        try {
+                           const urlValid = await ifUrlExist(currVal)
+                           if (urlValid) {
+                              this.selecting = false;
+                              setCssProp('--image-url', 'url('+this.urlInputEl.value+')') 
+                           }
                         }
-                     })  
-               }) 
+                        catch(error) {
+                           console.log('error caught')
+                        }
+                     } 
+                  }) 
+    
+                  this.addEventListener('dragover', e=> e.preventDefault())
 
-               this.shadowRoot.querySelector('#img-load-cancel').addEventListener('click', e=> {
-                  //console.log("setting selecting to false")
-                  e.stopPropagation()
-                  this.selecting = false
-               })
+                  this.addEventListener('dragenter', e=> {
+                      e.preventDefault()
+                     this.prevImgEl.classList.add('drag-ready') 
+                     setTimeout(()=> {
+                       this.prevImgEl.classList.remove('drag-ready') 
+                     }, 300)
+                  }) 
+                  this.addEventListener('drop', e=> {  
+                     console.log("drop event")
+                     e.preventDefault();    
+                     [...e.dataTransfer.items] 
+                        .filter( x => x.kind === 'file')
+                        .forEach( async blob => {   
 
-            }
-         }
+                           const file = await blob.getAsFile()  
+                           console.log(file.name)
+                           if (file.name.split('.').at(-1)) { 
+                              setCssProp('--image-url', 'url('+URL.createObjectURL(file)+')')
+                           }
+                        })  
+                  }) 
 
-         customElements.define("image-uploader", ImageUploader); 
+                  this.shadowRoot.querySelector('#img-load-cancel').addEventListener('click', e=> {
+                     //console.log("setting selecting to false")
+                     e.stopPropagation()
+                     this.selecting = false
+                  }) 
+               }
+            } 
+         })())
+    
 
-      })()     
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1227,11 +1656,11 @@
                dashEl         = document.getElementById('dash'), 
                innerDashEl    = document.getElementById('inner-dash');
 
-         let dashMin
+         let dashMin, intervalId
 
          setDashMin(origWidth)
 
-         
+   
 
          function startDashMove(event) {
            
@@ -1272,21 +1701,54 @@
           
          function startImageMove(event) {
 
+            let shouldRestart = false;
+
             document.body.classList.add('no-transitions'); 
-          
-            const origClick   = [ Math.round(event.x), Math.round(event.y) ],
-                  startingPos = readCssProp('--image-position').replace(/px/g,'').split(' ').map(Number)
-          
+
+            const activeTool = document.body.getAttribute('active-tool')
+            const origClick   = [ Math.round(event.x), Math.round(event.y) ];
+
+            let startingPos, changeFunc;
+
+            const zoomFraction = 1 / (Number(readCssProp('--zoom-amount').replace('%','')) / 100);
+
+            if (activeTool === 'move') { 
+               startingPos = readCssProp('--image-position').replace(/px/g,'').split(' ').map(Number);
+               changeFunc = (e)=> {
+                  setCssProp('--image-position', 
+                     (startingPos[0] + (Math.round(e.x - origClick[0]) * zoomFraction)) + 'px ' +
+                     (startingPos[1] + (Math.round(e.y - origClick[1]) * zoomFraction)) + 'px'
+                  )
+               }
+            }
+            else if (activeTool === 'twist') { 
+               startingPos = Number(readCssProp('--image-rotation').replace(/[^0-9]/g,'')) 
+               changeFunc = (e)=> {
+                  setCssProp('--image-rotation', 'rotate('+(startingPos + Math.round(e.y - origClick[1])) + 'deg)')
+               }
+            } 
+            else if (activeTool === 'pan') {  
+               startingPos = [ Number(readCssProp('--pan-x').replace('px','')), Number(readCssProp('--pan-y').replace('px',''))];
+               changeFunc = (e)=> {
+                  setCssProp('--pan-x',(startingPos[0]+(  Math.round(e.x - origClick[0])*zoomFraction)) + 'px')
+                  setCssProp('--pan-y',(startingPos[1]+(  Math.round(e.y - origClick[1])*zoomFraction)) + 'px') 
+               }
+            }
+      
             trackPointer(event,  {  
                budgeThreshold: 0,  
-               track: evt => {        
-                  setCssProp('--image-position', 
-                     (startingPos[0] + Math.round(evt.x - origClick[0])) + 'px ' +
-                     (startingPos[1] + Math.round(evt.y - origClick[1])) + 'px'
-                  )
-               }, 
+               start: evt =>{
+                  if (intervalId != null) {
+                     stopAnimation()
+                     shouldRestart = true;
+                  } 
+               },
+               track: changeFunc, 
                release: () => {       
                   document.body.classList.remove('no-transitions') 
+                  if (shouldRestart == true) {
+                     startAnimation()
+                  }
                }
             }); 
          }
@@ -1320,8 +1782,61 @@
          function setDashWidth(amt) {
             dashEl.style.width = amt + 'px'
          }
+ 
 
-          
+         let activeAnimations = [],
+             animLim = { r: 3100, x: 3400, y: 2870 },
+             incr = { r: 0, x: 1, y: 0 };
+
+         function toggleAnimationProp(property) {
+            if (property==='rotate') { property = 'r' } 
+            if (!activeAnimations.includes(property)){
+               if (activeAnimations.length===0){ startAnimation() }
+               activeAnimations.push(property) 
+            } 
+            else {
+               activeAnimations = activeAnimations.filter(itm => itm!==property) 
+               if (activeAnimations.length === 0) { stopAnimation()  }
+            }
+         }
+ 
+         function startAnimation(param) {   
+            if (intervalId == null) {  
+               const changeFunc = ()=> {  
+                  const [x,y] = readCssProp('--image-position').replace(/px/g,'').split(' ').map(Number), 
+                        pos   = { x, y, r: Number(readCssProp('--image-rotation').replace(/[^\-0-9]/g,''))}; 
+                  ['x','y','r'].forEach(prop => {
+                     if (activeAnimations.includes(prop)) {
+                        if (incr[prop] === 0 || pos[prop] <= -animLim[prop])  { incr[prop]=1 }
+                        if (pos[prop] >= animLim[prop]) { incr[prop] = -1 }
+                     }
+                     else { incr[prop]= 0; }
+                  });
+                  if (!(incr.x === 0 && incr.y ===0)) {
+                     setCssProp('--image-position', (x + incr.x)+'px '+(y + incr.y)+'px')     
+                  }               
+                  if (incr.r !== 0) {
+                     setCssProp('--image-rotation', 'rotate('+(pos.r + incr.r) + 'deg)') 
+                  }   
+               } 
+               intervalId = setInterval(changeFunc, 3);
+            } 
+         }
+         function stopAnimation(param) { 
+            clearInterval(intervalId);
+            intervalId = null; 
+         }
+
+         let activeTool =''
+
+         function activateTool(tool) {
+            if (tool !== activeTool) { 
+               activeTool = tool
+               document.body.setAttribute('active-tool', tool) 
+            }
+         }
+         
+         activateTool('move')
          const query = document.getElementById.bind(document)
 
          query('menu-button').addEventListener('click', e=> {
@@ -1334,34 +1849,92 @@
 
          query('main').addEventListener('pointerdown', e=> {
             startImageMove(e)
-         })   
+         })    
 
-         query('zoom-input').addEventListener('input', e=> {
-            setCssProp('--zoom-amount',  e.target.value + '%') 
-         }) 
+         query('mirror-radio-select').addEventListener('click', e=> {
+            let val = Number(e.originalTarget?.value ?? e.target.value)
+            if ([4,6,8,12].includes(val)) {
+               document.querySelector('hypno-tiler').setAttribute('reflect', val)    
+            } 
+         });
+   
+        // const toolInfo = {
+         //   'move': 'Move Source Image',
+        //    'pan' : 'Move Canvas',
+        //    'twist': 'Twist' 
+        // }
+         //const toolNameDisp = query('tool-name-display')
+         query('canvas-tools-toolbar').addEventListener('click', e=> {
+            const properTarget = (e.originalTarget ?? e.target)
+            const tName = properTarget.getAttribute('tool-name')
+            if (tName){
+               properTarget.setAttribute('active','');
 
-         query('rotate-input').addEventListener('input', e=> {
-            setCssProp('--canvas-rotation', 'rotate(' +  e.target.value + 'deg)') 
-         }) 
-
-         query("twist-input").addEventListener('input', e=> {
-            setCssProp('--image-rotation', 'rotate(' +  e.target.value + 'deg)') 
-         })
-
-         //query('hue-input').addEventListener('input', e=> {
-         //   setCssProp('--hue-rotation', 'hue-rotate(' +  e.target.value + 'deg)') 
-         //})
-
-         query('scale-input').addEventListener('input', e=> {
-            setCssProp('--image-scale', e.target.value + '%')
+               [...properTarget.parentNode.children].forEach(child=>{
+                  if (child!==properTarget) { child.removeAttribute('active') }
+               }) 
+               activateTool(tName) 
+            }
+            
          })
  
-         query('scale-input').value = Number(readCssProp('--image-scale').replace('%',''))
-         query('zoom-input').value = 100 
+   
+         
 
-         toggleDash('close')
+        ;['x','y','rotate'].forEach(toggle=> {
+            query('animate-'+toggle+'-toggle').addEventListener('toggle-check', e=> toggleAnimationProp(toggle)) 
+         })  
+        toggleAnimationProp('x')
+
+         const hypno = document.querySelector('hypno-tiler')
+         
+         const rowColIncr = (rowOrCol, e)=> { 
+            const currVal = Number(hypno.getAttribute(`num-${rowOrCol}s`)),
+                  incr    = (e.detail.value === 'plus' ? 1 : -1),
+                  newVal  = Math.max(1, Math.min(20, currVal + incr)); 
+            query(`${rowOrCol}s-display`).innerHTML = newVal;
+            hypno.setAttribute(`num-${rowOrCol}s`, newVal)
+         }
+         for (let rowCol of ['rows','columns']) {
+            query(rowCol+'-display').innerHTML = hypno.getAttribute('num-'+rowCol)
+         }
+         query('rows-incrementer').addEventListener('increment', e=> rowColIncr('row',e))
+         query('columns-incrementer').addEventListener('increment',e=> rowColIncr('column',e))
 
  
+         let aniPause = false,
+             timeout  = 0;
+         query('image-scale-input-slider').addEventListener('range-change', e=> {
+
+            if (e.detail.from === 'input' ) {
+               if (intervalId != null) {
+                  stopAnimation()
+                  document.body.classList.add('no-transitions') 
+                  aniPause = true;
+               }  
+               clearTimeout(timeout);
+               timeout = setTimeout(()=> {
+                  document.body.classList.remove('no-transitions') 
+                  if (aniPause == true) { startAnimation() }
+               }, 500); 
+            }
+            
+            setCssProp('--image-scale', e.detail.value + '%')  
+         })
+         
+         query('zoom-input-slider').addEventListener('range-change', e=> {
+            setCssProp('--zoom-amount', e.detail.value + '%')
+         })
+
+         query('rotate-input-slider').addEventListener('range-change', e=> {
+            setCssProp('--canvas-rotation', e.detail.value + 'deg')
+         })
+
+         
+
+         toggleDash('close') 
+
+         startAnimation();
       })() 
 
    </script>
