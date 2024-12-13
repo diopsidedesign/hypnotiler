@@ -35,7 +35,7 @@
          
       body {   
          line-height: var(--button-size);
-         
+         font-weight: 100;
          position: fixed;
 
          box-sizing: border-box; 
@@ -315,16 +315,11 @@
          text-decoration: underline;
       }
       
-      label,span {
-         /*letter-spacing: 2px;*/
-         /*font-size: 80%;*/
+      label,span { 
          margin: 0;
          display: inline-block;
          padding: 0;
-      }
-      label{
-        /* font-weight: bold;*/
-      }
+      } 
 
       fancy-checkbox, value-incrementer {
          --button-size: 1.6rem;
@@ -371,10 +366,8 @@
          flex: 1 0 4rem;          
       }
 
-      .toolbar > button::after {
-         /*letter-spacing: 2px;*/ 
-         opacity: .8;
-   
+      .toolbar > button::after { 
+         opacity: .8; 
          content : attr(tool-name);
          position: absolute;
          top: 110%;
@@ -517,9 +510,7 @@
          text-align: center;
          letter-spacing: 2px;
          width: 100%;  
-      }
-
-      
+      } 
 
       fancy-checkbox {
          --size-fraction: calc(var(--button-size) / 16); 
@@ -532,8 +523,7 @@
 
       fancy-checkbox input[type="checkbox"] {  
          margin: 0 1rem 0 0;   
-         width: var(--button-size);  
-        /* border-radius: calc(var(--button-size) / 8);*/ 
+         width: var(--button-size);   
       }  
 
       fancy-checkbox input[type="checkbox"]:not(:checked) + svg.checkmark-graphic {
@@ -574,16 +564,12 @@
          opacity: .5;
          letter-spacing: 1px;
          font-size: 80%;
-         line-height: 1.3rem;
-
+         line-height: 1.3rem; 
       }
-
-
+ 
       .dash-section {
          margin: 0 0 1rem 0;
-      }      
-
-
+      }       
 
       .spacer-section {
          height: 100%;
@@ -597,10 +583,8 @@
          margin-right: 1rem;
       }
 
-     .section-title, .title-section {
-        /* font-weight: bold;*/
-         text-align: center;
-        /* letter-spacing: 2px;*/
+     .section-title, .title-section { 
+         text-align: center; 
       }
 
      .title-section { 
@@ -612,11 +596,7 @@
               
       .animate-properties-group > div.section-title {
          text-align: left!important;
-      }
-
-      #row-col-incrementers > div > span:first-child {
-        /* font-weight: bold;*/
-      }
+      } 
 
       input[type="radio"] + label {
          font-weight: normal;
@@ -1712,6 +1692,7 @@
                   incr           = { r: 0, x: 1, y: 0 };
 
             let dashMin,
+                pollingRate = 15,
                 intervalId,
                 activeAnimations = [],
                 aniPause = false,
@@ -1865,9 +1846,9 @@
                      if (incr.r !== 0) {
                         setCssProp('--image-rotation', 'rotate('+(pos.r + incr.r) + 'deg)') 
                      } 
-                     intervalId = setTimeout(()=> changeFunc(), 3);   
+                     intervalId = setTimeout(()=> changeFunc(), pollingRate);   
                   }  
-                  intervalId = setTimeout(()=> changeFunc(), 3);  
+                  intervalId = setTimeout(()=> changeFunc(), pollingRate);  
                } 
             }
 
