@@ -20,7 +20,7 @@
         --image-position: 0px 0px;
         --tile-width: 240px; 
         --button-size: 2rem;
-        --image-scale: 100%;
+        --image-scale: 250%;
         --zoom-amount: 100%;        
         --image-rotation:  0deg;
         --canvas-rotation: 0deg; 
@@ -28,9 +28,10 @@
         --pan-y: 0px;
       } 
        
-      html, body, div {
+      html, body {
          font-family: sans-serif;
-         margin: 0; padding: 0;
+         margin: 0;
+         padding: 0;
       } 
          
       body {   
@@ -39,7 +40,7 @@
          box-sizing: border-box; 
          overflow: hidden hidden; 
          width: 100vw;  
-         min-height: 100vh;
+         min-height: 100dvh;
          height: 100%;
          display: flex; 
          flex-flow:  row nowrap;     
@@ -57,7 +58,8 @@
       #main,
       .inner-wrapper,
       #dash-handle { 
-         min-height: 100vh; 
+         /*min-height: 100vh; */
+         min-height: 100%;
          box-sizing: border-box;
       }
 
@@ -84,8 +86,19 @@
 
       #dash {    
          color: white;
-         background-color: rgba( 0, 0, 0, .5);
-         backdrop-filter: blur(2rem);
+         background-color: rgba( 0,0,0, .5);
+         backdrop-filter: blur(2rem); 
+
+         -webkit-backface-visibility: hidden;
+         -webkit-perspective: 1000;
+         -webkit-transform: translate3d(0,0,0);
+         -webkit-transform: translateZ(0);
+         
+         perspective: 1000;
+         transform: translate3d(0,0,0);
+         transform: translateZ(0); 
+         backface-visibility: hidden;
+
          -webkit-user-select: none;
          user-select: none;
          width: 0px;
@@ -138,7 +151,7 @@
          display: flex; 
          flex-flow: column nowrap;   
          justify-content: start;
-         transition: transform  500ms  ease-in-out;  
+         transition: transform  500ms ease-in-out;  
       }  
  
       #menu-button { 
@@ -152,8 +165,8 @@
          border-radius: 16%; 
          z-index: 33;
          cursor: pointer;   
-         fill: white!important;
-         stroke: white!important;
+         fill: white;
+         stroke: white;
          background-color: rgba(0, 0, 0, .5);
          transition: transform 500ms ease-in-out, 
                      filter 100ms linear 440ms,
@@ -162,7 +175,7 @@
          transform: translate(0, 0); 
       } 
  
-      #dash-handle button[menu] { 
+      #menu-button button[menu] { 
          height: 100%;   
          width: 100%;
          color: inherit;
@@ -190,20 +203,20 @@
          transform: translate(calc(-5.6rem + .3rem), calc(-1.66rem + .3rem)) scale(1);
       }  
        
-      button[menu] .icon {
+      #menu-button button[menu] svg.icon {
          transition: transform 150ms ease-in-out;
       } 
 
-      #menu-button svg.icon rect.menu-piece { 
+      #menu-button button[menu] svg.icon rect.menu-piece { 
          stroke-width: 1px;
          stroke-opacity: 1;  
          stroke: white!important;
          transform: scale(1,1) rotate(0deg);
-         transition: transform 500ms ease-in-out;  
+         transition: transform 500ms linear;  
          transform-origin: center center 0;
       }
 
-      body[dash-open] #menu-button .icon {
+      body[dash-open] #menu-button button[menu] .icon {
          rect.menu-piece.top    {  transform: translate(7px, 7px) rotate(-45deg)!important; }
          rect.menu-piece.middle {  transform: scale(0,0)!important;  }
          rect.menu-piece.bottom {  transform: translate(7px, -7px) rotate(45deg)!important; }
@@ -216,32 +229,13 @@
          transition: none!important;
       } 
 
-      .checkered-background {
-         background: linear-gradient(
-               45deg,
-               rgba(0, 0, 0, 0.0980392) 25%,
-               transparent 25%,
-               transparent 75%,
-               rgba(0, 0, 0, 0.0980392) 75%,
-               rgba(0, 0, 0, 0.0980392) 0
-            ),
-            linear-gradient(
-               45deg,
-               rgba(0, 0, 0, 0.0980392) 25%,
-               transparent 25%,
-               transparent 75%,
-               rgba(0, 0, 0, 0.0980392) 75%,
-               rgba(0, 0, 0, 0.0980392) 0
-            ), white;
-         background-repeat: repeat, repeat;
-         background-position: 0px 0, 5px 5px;
-         transform-origin: 0 0 0;
-         background-origin: padding-box, padding-box;
-         background-clip: border-box, border-box;
-         background-size: 10px 10px, 10px 10px;
-         box-shadow: none;
-         transition: none;
-         transform: scaleX(1) scaleY(1) scaleZ(1);
+      .checkered-background { 
+         background-image:  
+             linear-gradient(to right, rgba(250, 250, 250, 0.85), rgba(250, 250, 250, 0.85)), 
+             linear-gradient(to right, gray 50%, white 50%),
+             linear-gradient(to bottom, gray 50%, white 50%);
+         background-blend-mode: normal, difference, normal;
+         background-size: 1em 1em;
       }
 
       /* ************************************************************* */
@@ -253,6 +247,10 @@
       body[active-tool="pan"] #main >.inner-wrapper {
          cursor: move;
       } 
+
+      image-uploader {
+         height: 250px;
+      }
      
  
       button:not([menu]),
@@ -324,10 +322,8 @@
       fancy-checkbox, value-incrementer {
          --button-size: 1.6rem;
       }
-
-      input[type="radio"] {
-         width: calc(var(--button-size) / 1.5);
-      }
+    
+      
       
       input[type="radio"] { 
          display: inline-block;
@@ -344,21 +340,19 @@
          width: 50%;
          top: calc(25% + 1px);
          left: calc(25% + 1px);
-         background-color: white;
-         opacity: 0;
+         background-color: currentcolor;
+         transform: scale(0);
+         transition: transform 100ms ease-in-out;
       }
-      input[type="radio"]:checked::after {
-         border: none;
-         outline: none;
-         opacity: 1;
+      input[type="radio"]:checked::after { 
+         transform: scale(1);
       }
 
       .toolbar {
          display: inline-flex;
          flex-flow: row nowrap;
          width: 100%;
-         height:3rem;
-         margin: 0 auto; 
+         height: 3rem; 
       }
 
       .toolbar > button {
@@ -400,6 +394,9 @@
          pointer-events: none;
       }
 
+      /* wrapper divs for the kaleidoscope component that help w/ transforms */
+      /* easier to apply single transforms to single divs rather than repeatedly
+      /* trying to retweak one complex transform */
       .app-wrap,
       .app-wrap > div {
          width: 100vw;
@@ -421,10 +418,7 @@
          transform: rotate(var(--canvas-rotation));
       }
    
-      image-uploader {
-         max-height: calc(300px - 3rem); 
-      }
- 
+      
       .reset-button svg {
          left: -1px;
       }
@@ -489,9 +483,8 @@
          flex: 0 0 auto; 
       }
 
-      range-input label {
-         width: 4rem;
-         flex: 0 0 auto;
+      range-input label { 
+         flex: 0 0 3.5rem;
       }
 
       range-input input {  
@@ -522,11 +515,16 @@
       }
 
       fancy-checkbox input[type="checkbox"] {  
-         margin: 0 1rem 0 0;   
+         margin: 0 0 0 0;   
          width: var(--button-size);   
       }  
 
-      fancy-checkbox input[type="checkbox"]:not(:checked) + svg.checkmark-graphic {
+        fancy-checkbox[disabled] {
+         pointer-events: none;
+         opacity: .6;
+      }
+
+      fancy-checkbox input[type="checkbox"]:not(:checked):not([disabled]) + svg.checkmark-graphic {
          transform: scale(0);
       }
       fancy-checkbox input[type="checkbox"]:checked + svg.checkmark-graphic {
@@ -600,6 +598,14 @@
       .animate-properties-group > div.section-title {
          text-align: left!important;
       } 
+      .animate-properties-group > div:not(.section-title) {
+         display: inline-block;
+         margin-right: 1rem;
+      } 
+      .animate-properties-group.automode-enabled div:not(.auto-toggle) label,
+      .animate-properties-group.automode-enabled div:not(.auto-toggle) span {
+         opacity: .5!important;
+      }
 
       input[type="radio"] + label {
          font-weight: normal;
@@ -617,6 +623,15 @@
          position: relative;
          width: 100%;
 
+      }
+
+      .app-wrap.last {
+         display: grid;
+         place-content: center;
+      } 
+      hypno-tiler[reflect="6"],
+      hypno-tiler[reflect="12"] {
+         margin-top:25%;
       }
        
    </style>
@@ -638,9 +653,9 @@
 
          <div id="inner-dash" class="inner-wrapper">    
 
-            <div class="title-section"><span>hypnotiler 0.2</span></div>
+            <div class="title-section"><span>hypnotiler 0.3</span></div>
  
-            <image-uploader start-open class="dash-section"></image-uploader>
+            <image-uploader start-open class="checkered-background dash-section"></image-uploader>
          
             <div class="section-title">Canvas Tools</div>
             <div id="canvas-tools-toolbar" class="dash-section toolbar"> 
@@ -658,7 +673,7 @@
             <div class="dash-section"></div>
 
             <div id="image-slider-controls" class="dash-section">
-               <range-input label="Scale" id="image-scale-input-slider" unit="%" min="10" max="500" step="1" value="100"> 
+               <range-input label="Scale" id="image-scale-input-slider" unit="%" min="20" max="600" step="1" value="250"> 
                </range-input>
                <range-input label="Zoom" id="zoom-input-slider" unit="%" min="10" max="500" step="2" value="100"> 
                </range-input>
@@ -670,13 +685,13 @@
                <span class="section-title">Num. of Mirrors</span>
 
                <div id="mirror-radio-select">
-                 <input type="radio" id="mirror4" name="age" value="4">
+                 <input autocomplete="off" type="radio" id="mirror4" name="age" value="4">
                  <label for="mirror4">4</label>
-                 <input checked type="radio" id="mirror6" name="age" value="6">
+                 <input autocomplete="off" checked type="radio" id="mirror6" name="age" value="6">
                  <label for="mirror6">6</label>
-                 <input type="radio" id="mirror8" name="age" value="8">
+                 <input autocomplete="off" type="radio" id="mirror8" name="age" value="8">
                  <label for="mirror8">8</label>
-                 <input type="radio" id="mirror12" name="age" value="12">
+                 <input autocomplete="off" type="radio" id="mirror12" name="age" value="12">
                  <label for="mirror12">12</label>
                </div> 
             </div>
@@ -685,14 +700,25 @@
 
                <div class="animate-properties-group">
                   <div class="section-title">Animate:</div>
-                  <span>X</span>
-                  <fancy-checkbox checked id="animate-x-toggle"></fancy-checkbox>
+                  <div class="auto-toggle">
+                     <fancy-checkbox checked id="animate-auto-toggle"></fancy-checkbox>  
+                     <span>Auto</span>
+                  </div>
+                  <div>
+                     <fancy-checkbox id="animate-x-toggle"></fancy-checkbox>
+                     <span>X</span>
+                  </div>
 
-                  <span>Y</span>
-                  <fancy-checkbox id="animate-y-toggle"></fancy-checkbox>
+                  <div>
+                     <fancy-checkbox id="animate-y-toggle"></fancy-checkbox>
+                     <span>Y</span>
+                  </div>
 
-                  <span>Twist</span>
-                  <fancy-checkbox id="animate-rotate-toggle"></fancy-checkbox>  
+                  <div>
+                     <fancy-checkbox id="animate-rotate-toggle"></fancy-checkbox>  
+                     <span>Twist</span>
+                  </div> 
+
                </div>
 
             </div>
@@ -754,7 +780,7 @@
          <div id="zoom-wrap-inner">
             <div class="app-wrap">
                <div id="translate-wrap-inner">
-                  <div class="app-wrap"> 
+                  <div class="app-wrap last"> 
                      <hypno-tiler reflect="6"></hypno-tiler>
                   </div>
                </div>
@@ -961,6 +987,7 @@
          })()
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // saves some boilerplate for creating shadow DOM based custom elements
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
          class ShadowComponent extends HTMLElement {
@@ -993,6 +1020,7 @@
      
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // same as above but for non shadowDOM custom elements
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
       
 
@@ -1018,6 +1046,7 @@
 
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         //   the +/- UI component
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
          customElements.define('value-incrementer', class extends SimpleComponent{ 
@@ -1034,7 +1063,7 @@
                             <path d="M50,27L14,27C12,27 11,28 11,30L11,34C11,36 12,37 14,37L50,37C52,37 53,36 53,34L53,30C53,28 52,27 50,27Z"/>
                         </svg>  
                      </button>${this.hasAttribute('show-reset') ? ` 
-                     <button class="reset-button"  type="button">
+                     <button style="margin-left: .2rem" class="reset-button"  type="button">
                            <svg class="reset-button" viewBox="0 0 32 32">
                               <path d="M9.2 14c1-4 4-7 8.3-7a9 9 0 0 1 0 18c-2.4 0-4.4-1-6-2.5l-3 3.5a14 14 0 0 0 9 3.5 13.5 13.5 0 0 0 0-27A13 13 0 0 0 4.6 14H0l7 8 7-8H9.2Z"/>
                            </svg> 
@@ -1054,6 +1083,7 @@
 
     
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // slider UI component with label and value display
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
     
 
@@ -1081,6 +1111,8 @@
                   <value-incrementer show-reset></value-incrementer>`; 
             } 
 
+            
+
             connectedCallback() {
     
                this.valueDisplay = this.querySelector('span');
@@ -1097,22 +1129,26 @@
 
                this.event = new CustomEvent('range-change', { composed: true, bubbles: true, detail })
 
-               const setNewVal = (val,from) => {
+              
+               this.setNewValue = function(val,from) { 
                   detail.value = val;
                   detail.from  = from;
                   this.currentValue = val;
                   this.inputEl.value = val;
-                  this.valueDisplay.innerHTML = val + this.unit;
-                  this.dispatchEvent(this.event);
+                  this.valueDisplay.innerHTML = Math.round(val) + this.unit;
+                  if (from!=='outside'){
+                     this.dispatchEvent(this.event);   
+                  }               
                }
+
                this.querySelector('input').addEventListener('input', e => {  
-                  setNewVal(Number(e.originalTarget?.value ?? e.target.value), 'input') 
+                  this.setNewValue(Number(e.originalTarget?.value ?? e.target.value), 'input') 
                })
                this.querySelector('value-incrementer').addEventListener('increment', e=> { 
                   if (e.detail.value === 'reset') {
-                     setNewVal(this.originalValue, 'increment')
+                     this.setNewValue(this.originalValue, 'increment')
                   } else {
-                     setNewVal(Math.max(this.min, Math.min(this.max, this.currentValue + (e.detail.value==='plus'? this.step : -this.step ))), 'increment')    
+                     this.setNewValue(Math.max(this.min, Math.min(this.max, this.currentValue + (e.detail.value==='plus'? this.step : -this.step ))), 'increment')    
                   }               
                })
             } 
@@ -1120,6 +1156,7 @@
     
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // a fancy checkbox
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1140,9 +1177,9 @@
                   this.removeAttribute('checked')
                }
                this.event = new CustomEvent('toggle-check', { detail, bubbles: true, composed: true })
-               this.querySelector('input').addEventListener('click', e=> {
-                  detail.toggle = e.target.checked
-                  this.dispatchEvent(this.event);
+               this.querySelector('input').addEventListener('click', e=> { 
+                     detail.toggle = e.target.checked
+                     this.dispatchEvent(this.event); 
                })
             }
          })
@@ -1150,6 +1187,7 @@
 
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // the kaleidoscope
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
     
          customElements.define('hypno-tiler', (()=> {
@@ -1185,6 +1223,16 @@
                            margin: 0 auto;
                            white-space: nowrap; 
                            transform-origin: center center;
+
+                            -webkit-backface-visibility: hidden;
+                              -webkit-perspective: 1000;
+                              -webkit-transform: translate3d(0,0,0);
+                              -webkit-transform: translateZ(0);
+                              
+                              perspective: 1000;
+                              transform: translate3d(0,0,0);
+                              transform: translateZ(0); 
+                              backface-visibility: hidden;
                         }  
 
                         :host([reflect="6"]), :host([reflect="12"]) {
@@ -1203,8 +1251,7 @@
                         }  
 
                         .tile-group {
-                           transform: rotateZ(0);  
-
+                           transform: rotateZ(0);   
                            width: var(--tile-width) ;
                         }  
                         
@@ -1218,11 +1265,11 @@
                         .tri:before {
                            z-index:-1;
                            content: "";
-                           position: absolute; 
+                           position: absolute;  
                            height: calc(var(--tri-size) + 50%);
                            width:  calc(var(--tri-size) + 50%); 
                            top: -25%;
-                           left: -25%; 
+                           left: -25%;  
                            background:          var(--image-url);   
                            background-position: var(--image-position); 
                            background-size:        var(--image-scale);
@@ -1365,9 +1412,12 @@
                      this.template = ``;
                   }
                   connectedCallback() {   
-                     for (let i=0; i<((window.innerWidth / 240)+2); i++) {
-                        this.shadowRoot.appendChild(createTileColumnNode(((window.innerHeight / 240)+2)))
+                     for (let i=0; i<((window.innerWidth / 240)+3); i++) {
+                       this.shadowRoot.appendChild(createTileColumnNode(((window.innerHeight / 240)+3)))
                      }   
+                     //for (let i=0; i<3; i++) {
+                     //   this.shadowRoot.appendChild(createTileColumnNode(3))
+                     //}   
                      this.setAttribute('num-columns', this.shadowRoot.children.length)
                      this.setAttribute('num-rows', this.shadowRoot.children[0].children.length)
                   }
@@ -1406,6 +1456,7 @@
     
     
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // image upload / preview / drag+drop box
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
     
 
@@ -1423,33 +1474,22 @@
                   constructor() { super();
                      this.styles = `  
 
-                        :host {
-                           text-align: center;
+                        :host { 
                            font-size: 90%; 
                            outline: 2px dotted rgba(255,255,255,.5);
-                           display: grid;
-                           place-content: center;
-                           position: relative; 
-                           width: calc(100% - 1rem);
-                           height: calc(100% - 2rem); 
+                           display: grid; 
+                           text-align:center;
+                           position: relative;  
+                           flex:0 0 auto;
+                           overflow: hidden;
                            margin: 0 auto;    
                            cursor: pointer;
-                           z-index: 1;
-                        }
-
-                        svg {
-                           fill-rule: evenodd;
-                           clip-rule: evenodd;
-                           stroke-linejoin: round;
-                           stroke-miterlimit: 2;
+                           z-index: 1; 
                         } 
 
-                        p{
-                           margin:0;
-                        }
-
-                        button:not([menu]),
+                        button,
                         input[type="file"]  {
+                           box-sizing: border-box;
                            appearance: none;
                            color: white;
                            cursor: pointer;  
@@ -1457,7 +1497,7 @@
                            display: inline-block;
                            vertical-align: middle;
                            padding:.3rem; 
-                           max-height: 3rem;
+                           margin: 0 0;
                            background-color: rgb(255 255 255 / .1);
                            border-radius: .2rem;
                            outline: 0.1rem solid rgb(0 0 0 / .1); 
@@ -1465,74 +1505,19 @@
                                        rgb(255 255 255 / .1)  1px  1px 1px 1px inset; 
                         }
 
-                        input[type="file"] {
-                           margin: 0 0;
-                           padding: .3rem 0 .3rem 0;
-                           display:block;
-                           width: calc(100% - 14rem);
-                        }
-
-                        input[type="url"] {
+                        input[type="url"] { 
                            background: rgb(255 255 255 / .2);
                         }
 
-                        button:not([menu]):active,
-                        button:not([menu])[active],
-                        input[type="file"]:active  {
+                        button:active, button[active], input[type="file"]:active  {
                            box-shadow: rgb(0 0 0 / .4)         1px  1px 1px 1px inset,
                                        rgb(255 255 255 / .1)  -1px -1px 1px 1px inset; 
                            background-color: rgb(0 0 0 / .1);
-                        }
-
-                        label {
-                           font: sans-serif; 
-                        }
-
-                        input[type="file"],input[type="url"] {
-                           margin-top: .25rem;
-                        } 
+                        }  
 
                         input[type="file"] {
                            position: relative;
                            width: 100%; 
-                        }
-                   
-                         :host(:hover) img#preview-image-element,
-                         :host(.selecting) img#preview-image-element { 
-                           filter: brightness(50%); 
-                        }  
-                   
-                        img#preview-image-element {  
-                           box-sizing: border-box;
-                           position: relative;
-                           content: var(--image-url);   
-                           width: 100%;
-                           height: calc(300px - 3rem); 
-                        }
-                        img#preview-image-element.drag-ready {
-                           filter: brightness(150%);
-                        }
-       
-                        #preview-frame-graphic { 
-                           align-self: center;
-                           justify-self: center;  
-                           position: absolute; 
-                           z-index: 100;  
-                           opacity: 0; 
-                        }
-
-                        :host(:hover){ 
-                           outline: 2px dotted white;
-                        }
-
-                        :host(:hover) #preview-frame-graphic {
-                           opacity: .7;
-                        } 
-
-                        #preview-frame-graphic > svg { 
-                           width: 50%;
-                           margin: auto;
-                           fill: white;
                         }
 
                         .image-submit-wrapper {
@@ -1543,56 +1528,103 @@
                            position: absolute; 
                            z-index: 100; 
                            opacity: 1;
+                           visibility: hidden;
+                           background: rgb(0 0 0 / .1);
                         } 
 
-                        :host(.selecting) #preview-frame-graphic {
-                           pointer-events: none;
-                           opacity: 0!important;
-                        } 
-                        :host(.selecting) .image-submit-wrapper {
-                           visibility: visible;
-                        }   
-                        :host(:not(.selecting)) .image-submit-wrapper {
-                           visibility: hidden;
-                        } 
-                        .img-submit-inner {
+                        .image-submit-wrapper > div {
                            padding: 1rem;
                            align-self: center;
                            justify-self: center; 
                         }
-                        .img-submit-group.cancel {
-                           margin-bottom: .3rem;
-                           margin-top: 2rem;
+
+                        .image-submit-wrapper > div > div:last-child {
+                           margin-top: .5rem;
                         }
+                    
+                        img#preview-image-element {  
+                           align-self: center;
+                           justify-self: center;  
+                           box-sizing: border-box;
+                           position: absolute;
+                           content: var(--image-url);     
+                           object-fit: contain; 
+                           height: calc(100% + 2px);
+                           min-width:100%;
+                           max-height: calc(100% + 2px); 
+                           margin-bottom: -1px;
+                        }
+ 
+                        #preview-frame-graphic { 
+                           width: 100%;
+                           margin: 0 auto;
+                           height: 100%;
+                           display: grid;
+                           place-content: center;
+                           align-self: center;
+                           justify-self: center;  
+                           position: absolute; 
+                           z-index: 100;  
+                           opacity: 0;
+                           transition: opacity 100ms ease-in-out;
+                           pointer-events: none;
+                           background: rgb(0 0 0 / .1);
+                        }
+
+                        #preview-frame-graphic > svg {  
+                           width: 50%;
+                           margin: auto;
+                           fill: currentcolor;
+                        }                 
+
+                        img#preview-image-element.drag-ready     {
+                           filter: brightness(150%)
+                        } 
+
+                        :host(:hover)     #preview-image-element,
+                        :host(.selecting) #preview-image-element {
+                           filter: brightness(50%);
+                        }  
+
+                        :host(:hover) {
+                           outline: 2px dotted white;
+                        }
+                        :host(:hover) #preview-frame-graphic     {
+                           transition: opacity 0ms ease-in-out;
+                           opacity: 1;
+                        }   
+                        :host(:hover) #preview-frame-graphic svg {
+                           opacity: .7;
+                        }   
+                        :host(.selecting) #preview-frame-graphic {
+                           opacity: 0!important;
+                        }  
+                        :host(.selecting) .image-submit-wrapper  {
+                           visibility: visible;
+                        }  
+                        
                      `;
 
-                     this.template =  `
-                       
-                        <div class="image-submit-wrapper">
-
-                           <div class="img-submit-inner">
-
-                              <div class="img-submit-group">
+                     this.template =  ` 
+                        <div class="image-submit-wrapper"> 
+                           <div>
+                              <div>
                                  <label for="file-input-element">Choose file to upload</label>
                                  <input type="file" id="file-input-element" name="file" accept="image/*" /> 
-                              </div> 
-
-                              <p> OR </p>
-
-                              <div class="img-submit-group">
+                              </div>  
+                              <div> OR </div> 
+                              <div >
                                  <label for="url-input-element">Enter image URL</label>
                                  <input type="url" id="url-input-element"/> 
                                  <button title="Load Image Url" type="button" id="url-input-submit">Load</button>
                               </div>  
-                              <div class="cancel img-submit-group"> 
+                              <div > 
                                  <button title="Cancel Load New Image" type="button" id="img-load-cancel">Cancel</button>
-                              </div> 
-
-                           </div>
-
+                              </div>  
+                           </div> 
                         </div>
 
-                      <div id="preview-frame-graphic">
+                        <div id="preview-frame-graphic">
                            <svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 120 120">
                               <path d="M77 111H25A16 16 0 0 1 9 95V25A16 16 0 0 1 25 9h70a16 16 0 0 1 16 16v52a24 24 0 0 0-2-1.7V25a14 14 0 0 0-14-14H25a14 14 0 0 0-14 14v62l20-19 20 17 27-29 10.5 14.6A24 24 0 0 0 77.1 111Z"/>
                               <circle cx="38" cy="36" r="13"/>
@@ -1600,13 +1632,13 @@
                            </svg> 
                         </div>  
 
-                        <img id="preview-image-element" class="preview-image" >`;
-
-
+                        <img id="preview-image-element" class="preview-image" >`; 
                   }
+
                   get selecting() { 
                      return this.classList.contains('selecting') 
                   }
+
                   set selecting(val) {   
                      if (val == false) {
                         this.classList.remove('selecting') 
@@ -1620,25 +1652,25 @@
                      this.selecting = false;
        
                      this.fileInputEl = this.shadowRoot.querySelector('#file-input-element')
-                     this.prevImgEl = this.shadowRoot.querySelector('#preview-image-element')
-                     this.urlInputEl = this.shadowRoot.querySelector('#url-input-element')
-                     this.checkbox = this.shadowRoot.querySelector('input[type="checkbox"]')
+                     this.prevImgEl   = this.shadowRoot.querySelector('#preview-image-element')
+                     this.urlInputEl  = this.shadowRoot.querySelector('#url-input-element')
+                     this.checkbox    = this.shadowRoot.querySelector('input[type="checkbox"]')
 
-                     this.shadowRoot.addEventListener('click', e=> {
+                     this.addEventListener('click', e=> { 
                         e.stopPropagation()
                         if (this.selecting === false) { this.selecting = true }
                      })
 
-                     this.fileInputEl.addEventListener('change', e=> { 
+                     this.fileInputEl.addEventListener('change', async e => { 
                         const file = this.fileInputEl.files[0]
                         if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(1))) { 
                            let url=URL.createObjectURL(file)
-                           this.selecting = false;
-                           setCssProp('--image-url', 'url('+url+')')
+                           this.selecting = false; 
+                           setCssProp('--image-url', 'url('+url+')');  
                         }
-                     }) 
+                     })                     
 
-                     this.shadowRoot.querySelector('#url-input-submit').addEventListener('click', async e=> { 
+                     this.urlInputEl.addEventListener('click', async e=> { 
 
                         const currVal = this.urlInputEl.value,
                               extens  = currVal.split('.').at(-1)
@@ -1647,13 +1679,13 @@
                            try {
                               const urlValid = await ifUrlExist(currVal)
                               if (urlValid) {
-                                 this.selecting = false;
-                                 setCssProp('--image-url', 'url('+this.urlInputEl.value+')') 
+                                 this.selecting = false; 
+                                 setCssProp('--image-url', 'url('+this.urlInputEl.value+')')  
                               }
                            }
                            catch(error) {
                               console.log('error caught')
-                           }
+                           } 
                         } 
                      }) 
        
@@ -1666,39 +1698,35 @@
                           this.prevImgEl.classList.remove('drag-ready') 
                         }, 300)
                      }) 
-                     this.addEventListener('drop', e=> {  
-                        console.log("drop event")
+
+                     this.addEventListener('drop', e=> {   
                         e.preventDefault();    
                         [...e.dataTransfer.items] 
                            .filter( x => x.kind === 'file')
                            .forEach( async blob => {   
-
-                              const file = await blob.getAsFile()  
-                              console.log(file.name)
-                              if (file.name.split('.').at(-1)) { 
-                                 setCssProp('--image-url', 'url('+URL.createObjectURL(file)+')')
+                              const file = await blob.getAsFile()                                
+                              if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))) { 
+                                 setCssProp('--image-url', 'url('+URL.createObjectURL(file)+')') 
                               }
                            })  
                      }) 
 
-                     this.shadowRoot.querySelector('#img-load-cancel').addEventListener('click', e=> {
-                        //console.log("setting selecting to false")
+                     this.shadowRoot.querySelector('#img-load-cancel').addEventListener('click', e=> { 
                         e.stopPropagation()
                         this.selecting = false
                      }) 
-
 
                      if (this.hasAttribute('start-open')){
                         this.selecting = true; 
                      } 
                   }
-
                } 
             })())
        
 
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         //  
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1710,15 +1738,26 @@
                   MINMAINWIDTH   = 210, 
                   dashEl         = document.getElementById('dash'), 
                   innerDashEl    = document.getElementById('inner-dash'), 
-                  animLim        = { r: 3100, x: 3400, y: 2870 },
-                  incr           = { r: 0, x: 1, y: 0 };
+                  animLim        = { r: 3100, x: 3400, y: 2870, z: 100 },
+                  incr           = { r: 0, x: 1, y: 0, z: 0 },
+                  TIME_INTERVALS = [
+                     4000, 7000, 10000, 15000, 25000
+                  ],
+                  ANIM_SELECT_PROBABILITIES = [
+                     'x','x','x','x','x','x','x',
+                     'y','y','y','y','y','y','y',
+                     'r','r','r','r'
+                  ];
 
             let dashMin,
+                canZoom = true,
                 pollingRate = 15,
                 intervalId,
+                autoModeInterval,
+                initialZoom = 100,
                 activeAnimations = [],
                 aniPause = false,
-                timeout  = 0;
+                imgScaleTimeout  = 0;
 
             function startDashMove(event) {
               
@@ -1836,19 +1875,23 @@
 
             function setDashWidth(amt) {
                dashEl.style.width = amt + 'px'
-            }
+            } 
 
-            function toggleAnimationProp(property) {
-               if (property==='rotate') { property = 'r' } 
-               if (!activeAnimations.includes(property)){
-                  if (activeAnimations.length===0){ startAnimation() }
+            function toggleAnimationProp(property) { 
+               if (property==='rotate') {
+                  property = 'r'
+               } 
+               if (!activeAnimations.includes(property)){ 
+                  if (activeAnimations.length === 0){ startAnimation() }
                   activeAnimations.push(property) 
                } 
-               else {
+               else { 
                   activeAnimations = activeAnimations.filter(itm => itm!==property) 
                   if (activeAnimations.length === 0) { stopAnimation()  }
-               }
+               }  
             }
+
+            const zoomSlider = document.getElementById('zoom-input-slider');
     
             function startAnimation(param) {   
                if (intervalId == null) {  
@@ -1874,39 +1917,106 @@
                } 
             }
 
+
             function stopAnimation(param) { 
                clearInterval(intervalId);
                intervalId = null; 
             } 
 
+            
+            const enableAutoMode = (()=> {
+               
+               const getRandInterval = (arr)=> arr[arr.length * Math.random() | 0];
+
+               return function() {
+ 
+                  document.querySelector('.animate-properties-group').classList.add('automode-enabled');
+                  ['animate-x-toggle','animate-y-toggle','animate-rotate-toggle'].forEach(id=>{
+                     document.getElementById(id).setAttribute('disabled','')
+                  });
+                  const change = ()=> { 
+                     const randVal = Math.round(Math.random()*2)
+                     switch(activeAnimations.length) {
+                        case 0:
+                           toggleAnimationProp(getRandInterval(ANIM_SELECT_PROBABILITIES))
+                           break;
+                        case 1:  
+                           let toAddFrom = ANIM_SELECT_PROBABILITIES.filter(item=> item !== activeAnimations[0])
+                           if (randVal===0){ 
+                              toggleAnimationProp(getRandInterval(toAddFrom))
+                           } else if (randVal===1) {
+                              let curr = activeAnimations[0]; 
+                              toggleAnimationProp(getRandInterval(toAddFrom))
+                              toggleAnimationProp(curr)
+                           } 
+                           break;
+                        case 2:  
+                           if (randVal===0) {
+                              toggleAnimationProp(activeAnimations.includes('r') ? 'r': getRandInterval(activeAnimations))
+                           } else if (randVal===1) {
+                              let toAddFrom = ANIM_SELECT_PROBABILITIES.filter(item=> !activeAnimations.includes(item))
+                              toggleAnimationProp(getRandInterval(toAddFrom))
+                           } 
+                           break;
+                        case 3: 
+                           if (randVal!==3){
+                              toggleAnimationProp(activeAnimations.includes('r') ? 'r': getRandInterval(activeAnimations))    
+                           }              
+                           break;
+                     }
+                     autoModeInterval = setTimeout(change,  getRandInterval(TIME_INTERVALS))
+                  } 
+                  if (autoModeInterval==null){
+                     change()
+                  }
+               }
+            })()
+
+            function disableAutoMode() {
+               let checkedAnims = []; 
+               document.querySelector('.animate-properties-group').classList.remove('automode-enabled');
+               ['animate-x-toggle','animate-y-toggle','animate-rotate-toggle'].forEach(id=>{
+                  const el = document.getElementById(id)
+                  if (el.querySelector('input').checked){
+                     checkedAnims.push(((id.split('-')[1])[0]))
+                  }
+                  el.removeAttribute('disabled')
+               }); 
+               checkedAnims.forEach(anim=>{
+                  if (!activeAnimations.includes(anim)) toggleAnimationProp(anim) }) 
+               activeAnimations.forEach(anim=>{
+                  if (!checkedAnims.includes(anim)) toggleAnimationProp(anim) }) 
+               clearTimeout(autoModeInterval)
+               autoModeInterval = null; 
+            }
+
+ 
             function activateTool(tool) {
                if (tool !== document.body.getAttribute('active-tool')) {  
                   document.body.setAttribute('active-tool', tool) 
                }
             }
-                        
-            const query = document.getElementById.bind(document)
-
-            query('menu-button').addEventListener('click', e=> {
+     
+            document.getElementById('menu-button').addEventListener('click', e=> {
                toggleDash(getDashWidth() > 0 ? 'close' : 'open')
             }) 
 
-            query('dash-handle').addEventListener('pointerdown', e=> {
+            document.getElementById('dash-handle').addEventListener('pointerdown', e=> {
                if (e.target.tagName === 'DIV') { startDashMove(e) }
             }) 
 
-            query('main').addEventListener('pointerdown', e=> {
+            document.getElementById('main').addEventListener('pointerdown', e=> {
                startImageMove(e)
             })    
 
-            query('mirror-radio-select').addEventListener('click', e=> {
+            document.getElementById('mirror-radio-select').addEventListener('click', e=> {
                let val = Number(e.originalTarget?.value ?? e.target.value)
                if ([4,6,8,12].includes(val)) {
                   document.querySelector('hypno-tiler').setAttribute('reflect', val)    
                } 
             });
     
-            query('canvas-tools-toolbar').addEventListener('click', e=> {
+            document.getElementById('canvas-tools-toolbar').addEventListener('click', e=> {
                const properTarget = (e.originalTarget ?? e.target)
                const tName = properTarget.getAttribute('tool-name')
                if (tName){
@@ -1916,8 +2026,7 @@
                      if (child!==properTarget) { child.removeAttribute('active') }
                   }) 
                   activateTool(tName) 
-               }
-               
+               } 
             })
  
             const bouncedResizeTimer = debounce(()=> {
@@ -1941,9 +2050,14 @@
                bouncedResizeTimer();
             })
     
-           ;['x','y','rotate'].forEach(toggle=> {
-               query('animate-'+toggle+'-toggle').addEventListener('toggle-check', e=> toggleAnimationProp(toggle)) 
+            ;['x','y','rotate'].forEach(toggle=> {
+               document.getElementById('animate-'+toggle+'-toggle')
+                       .addEventListener('toggle-check', e=> toggleAnimationProp(toggle)) 
             })  
+             
+            document.getElementById('animate-auto-toggle').addEventListener(
+               'toggle-check', e=> e.detail.toggle ? enableAutoMode() : disableAutoMode()
+            );
            
             const hypno = document.querySelector('hypno-tiler')
             
@@ -1951,16 +2065,15 @@
                const currVal = Number(hypno.getAttribute(`num-${rowOrCol}s`)),
                      incr    = (e.detail.value === 'plus' ? 1 : -1),
                      newVal  = Math.max(1, Math.min(20, currVal + incr)); 
-               query(`${rowOrCol}s-display`).innerHTML = newVal;
+               document.getElementById(`${rowOrCol}s-display`).innerHTML = newVal;
                hypno.setAttribute(`num-${rowOrCol}s`, newVal)
             }
                         
-            query('rows-incrementer').addEventListener('increment', e=> rowColIncr('row',e))
+            document.getElementById('rows-incrementer').addEventListener('increment', e=> rowColIncr('row', e))
 
-            query('columns-incrementer').addEventListener('increment',e=> rowColIncr('column',e))
-    
-            
-            query('image-scale-input-slider').addEventListener('range-change', e=> {
+            document.getElementById('columns-incrementer').addEventListener('increment',e=> rowColIncr('column', e))
+       
+            document.getElementById('image-scale-input-slider').addEventListener('range-change', e=> {
 
                if (e.detail.from === 'input' ) {
                   if (intervalId != null) {
@@ -1968,8 +2081,8 @@
                      document.body.classList.add('no-transitions') 
                      aniPause = true;
                   }  
-                  clearTimeout(timeout);
-                  timeout = setTimeout(()=> {
+                  clearTimeout(imgScaleTimeout);
+                  imgScaleTimeout = setTimeout(()=> {
                      document.body.classList.remove('no-transitions') 
                      if (aniPause == true) { startAnimation() }
                   }, 500); 
@@ -1978,25 +2091,29 @@
                setCssProp('--image-scale', e.detail.value + '%')  
             })
             
-            query('zoom-input-slider').addEventListener('range-change', e=> {
+            document.getElementById('zoom-input-slider').addEventListener('range-change', e=> {
                setCssProp('--zoom-amount', e.detail.value + '%')
+               initialZoom = e.detail.value;
             })
 
-            query('rotate-input-slider').addEventListener('range-change', e=> {
+            document.getElementById('rotate-input-slider').addEventListener('range-change', e=> {
                setCssProp('--canvas-rotation', e.detail.value + 'deg')
             })
 
             setTimeout(()=>{
                for (let rowCol of ['rows','columns']) {
-                  query(rowCol+'-display').innerHTML = hypno.getAttribute('num-'+rowCol)
+                  document.getElementById(rowCol+'-display').innerHTML = hypno.getAttribute('num-'+rowCol)
                }
             },100);
 
             setDashMin(origWidth)
             toggleDash('close') 
-            toggleAnimationProp('x')
-            startAnimation();
+            //toggleAnimationProp('x')
+            enableAutoMode()
+            //startAnimation();
             activateTool('move')
+           
+
          })() 
 
       })()
