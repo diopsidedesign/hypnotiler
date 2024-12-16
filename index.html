@@ -1051,6 +1051,8 @@
          // for more elegant click + hold/move mouse behaviors
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+         let onePointerIsDown = false;
+         
          const trackPointer = (function(){
 
             let lastPtrUp = null
@@ -1060,7 +1062,7 @@
 
             return function(event, options) {    
              
-               if (event.pointerType === 'mouse' && event.button === 2) {
+               if (onePointerIsDown === true || (event.pointerType === 'mouse' && event.button === 2)) {
                   return false   
                }
 
@@ -1127,6 +1129,7 @@
                   if (options.release) {
                      options.release(e)  
                   }
+                  onePointerIsDown = false;
                }     
 
                lastPtrUp = !!lastPtrUp ? lastPtrUp : null
@@ -1134,7 +1137,8 @@
                if (options.start) {
                   options.start(event) 
                }
-              
+
+               onePointerIsDown = true;
                ;['pointerup', 'contextmenu'].forEach(type => target.addEventListener(type, release))  
                target.addEventListener('pointermove', track) 
             }
