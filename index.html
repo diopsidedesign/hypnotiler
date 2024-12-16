@@ -604,7 +604,7 @@
          display: block;  
          display: flex;
          flex-flow: row nowrap;
-         width: 100%;
+         width: calc(100% - 1.5rem);
       }
 
       .image-control-group > .display-section > div > span:first-child {
@@ -964,6 +964,7 @@
          const IMG_FILE_EXTENSIONS = ['jpg','jpeg','png','gif','svg','heic','webp'];
 
          function setCssProp(prop, val) {
+
             requestAnimationFrame(()=> document.documentElement.style.setProperty(prop, val)) 
          }
 
@@ -1052,17 +1053,17 @@
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
          let onePointerIsDown = false;
-         
+
          const trackPointer = (function(){
 
             let lastPtrUp = null
 
             const POINTER_TRACK_THRESHOLD = 6,
-                  DBL_CLICK_MS = 278
+                  DBL_CLICK_MS            = 278
 
             return function(event, options) {    
              
-               if (onePointerIsDown === true || (event.pointerType === 'mouse' && event.button === 2)) {
+               if ((event.pointerType === 'mouse' && event.button === 2)) {
                   return false   
                }
 
@@ -1132,15 +1133,18 @@
                   onePointerIsDown = false;
                }     
 
-               lastPtrUp = !!lastPtrUp ? lastPtrUp : null
-               
-               if (options.start) {
-                  options.start(event) 
+               if (onePointerIsDown === false) {
+                  onePointerIsDown = true;
+                  lastPtrUp = !!lastPtrUp ? lastPtrUp : null
+                  
+                  if (options.start) {
+                     options.start(event) 
+                  }
+                  
+                  ;['pointerup', 'contextmenu'].forEach(type => target.addEventListener(type, release))  
+                  target.addEventListener('pointermove', track) 
                }
-
-               onePointerIsDown = true;
-               ;['pointerup', 'contextmenu'].forEach(type => target.addEventListener(type, release))  
-               target.addEventListener('pointermove', track) 
+               
             }
 
          })()
@@ -1532,24 +1536,23 @@
                            transform: rotateZ(0);   
                            width: var(--tile-width) ;
                         }  
-                        
-                        .tri {
+                        .tri, .tri:before, .tile-group, .tile-column {
+                           -webkit-backface-visibility: hidden;
+                           -webkit-transform: translate3d(0,0,0);
+                           -webkit-transform: translateZ(0); 
+                           transform: translate3d(0,0,0);
+                           transform: translateZ(0); 
+                           backface-visibility: hidden; 
+                        }
+                        .tri { 
                            height: var(--tri-size);
                            width: var(--tri-size); 
                            position: absolute;  
                            z-index:1;
                         }  
 
-                        .tri, .tri:before, .tile-group, .tile-column {
-                           -webkit-backface-visibility: hidden;
-                           -webkit-transform: translate3d(0,0,0);
-                           -webkit-transform: translateZ(0); 
-                           transform: translate3d(0,0,0);
-                           /*transform: translateZ(0);*/
-                           backface-visibility: hidden; 
-                        }
-
                         .tri:before {
+
                            z-index:-1;
                            content: "";
                            position: absolute;  
@@ -2262,8 +2265,8 @@
                      ['x','y','r'].forEach(prop => {
                         if (activeAnimations.includes(prop)) {
                            let incrBase = prop === 'r' ? 0.8 : 1;
-                           if (incr[prop] === 0 || pos[prop] <= -animLim[prop])  { incr[prop]=incrBase }
-                           if (pos[prop] >= animLim[prop]) { incr[prop] = incrBase*(-1) }
+                           if (incr[prop] === 0 || pos[prop] <= -animLim[prop])  { incr[prop]= incrBase }
+                           if (pos[prop] >= animLim[prop]) { incr[prop] = incrBase*-1 }
                         }
                         else { incr[prop]= 0; }
                      });
@@ -2380,7 +2383,10 @@
                   .forEach( async blob => {   
                      const file = await blob.getAsFile()                                
                      if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))) { 
-                        setCssProp('--image-url', 'url('+URL.createObjectURL(file)+')') 
+                        const newurl = 'url('+URL.createObjectURL(file)+')'
+                        setCssProp('--image-url', newurl) 
+
+                        sessionStorage.setItem('imageUrl', newurl)  
                         upl.classList.remove('selecting')
                         upl.classList.remove('url-input')
                      }
@@ -2574,7 +2580,7 @@
             enableAutoMode() 
             updateAnimDisplay()
             activateTool('move')
-            
+             
             /* if an image url is detected in url hash, try and load it */
             if (window.location.hash.replace('#','').startsWith('http') &&
                IMG_FILE_EXTENSIONS.includes(window.location.hash.split('.').at(-1))) { 
