@@ -57,8 +57,7 @@
       #dash,
       #main,
       .inner-wrapper,
-      #dash-handle { 
-         /*min-height: 100vh; */
+      #dash-handle {  
          min-height: 100%;
          box-sizing: border-box;
       }
@@ -87,18 +86,15 @@
       #dash {    
          color: white;
          background-color: rgba( 0,0,0, .5);
-         backdrop-filter: blur(2rem); 
-
+         backdrop-filter: blur(2rem);  
          -webkit-backface-visibility: hidden;
          -webkit-perspective: 1000;
          -webkit-transform: translate3d(0,0,0);
-         -webkit-transform: translateZ(0);
-         
+         -webkit-transform: translateZ(0); 
          perspective: 1000;
          transform: translate3d(0,0,0);
          transform: translateZ(0); 
-         backface-visibility: hidden;
-
+         backface-visibility: hidden; 
          -webkit-user-select: none;
          user-select: none;
          width: 0px;
@@ -244,18 +240,22 @@
       body[active-tool="move"] #main >.inner-wrapper {
          cursor: grab;
       } 
+
       body[active-tool="pan"] #main >.inner-wrapper {
          cursor: move;
       } 
 
-      image-uploader {
-         height: 250px;
-      }
-     
+
+      /**/
+
  
+
+      /**/
+
       button:not([menu]),
-      input[type="radio"],
-      input[type="checkbox"] {
+      input[type="radio"], 
+      input[type="checkbox"],
+      .image-control-group {
          appearance: none;
          color: white;
          cursor: pointer;  
@@ -271,20 +271,39 @@
          box-shadow: rgb(0 0 0 / .4)       -1px -1px 1px 1px inset,
                      rgb(255 255 255 / .1)  1px  1px 1px 1px inset; 
       }
+
+      .image-control-group:hover ,
+      .toolbar button:hover,
+      input[type="radio"]:hover {
+         background-color: rgb(255 255 255 / .2);
+         outline: 0.1rem solid rgb(0 0 0 / .2); 
+         box-shadow: rgb(0 0 0 / .3)       -1px -1px 1px 1px inset,
+                     rgb(255 255 255 / .2)  1px  1px 1px 1px inset; 
+      }
       
       button:not([menu]) {          
          margin: 0;  
          border: none;    
       }
-
+ 
       button:not([menu]):active,
+      .image-control-group[active],
       button:not([menu])[active],
       input[type="radio"]:checked,
       input[type="checkbox"]:checked {
          box-shadow: rgb(0 0 0 / .4)         1px  1px 1px 1px inset,
                      rgb(255 255 255 / .1)  -1px -1px 1px 1px inset; 
-         background-color: rgb(0 0 0 / .1);
+         background-color: rgb(0 0 0 / .1); 
       }
+
+      .image-control-group[active],
+      .toolbar button:active,
+      .toolbar button[active] {
+         box-shadow: rgb(0 0 0 / .4)         0px  1px 1px 1px inset,
+                     rgb(255 255 255 / .1)   0px -1px 1px 1px inset; 
+            border-right:2px solid rgb(0 0 0 / .5);
+          background-color: rgb(255 255 255 / .2);
+      } 
 
       button:not([menu]) svg {
          position: relative;
@@ -302,29 +321,22 @@
          top:  1px;
          left: 1px; 
       } 
-
-      a, a:visited { 
-         color: inherit;
-         text-decoration: none;
-      }
-
-      a:hover {
-         text-decoration: underline;
-      }
+ 
       
       label,span { 
          margin: 0;
          display: inline-block;
-         padding: 0;
+         padding: 0; 
       } 
-
-
-      fancy-checkbox, value-incrementer {
+ 
+       value-incrementer, range-input {
          --button-size: 1.6rem;
       }
-    
-      
-      
+
+      fancy-checkbox  {
+         --button-size: 1.4rem;
+      }
+       
       input[type="radio"] { 
          display: inline-block;
          margin: 0;
@@ -332,6 +344,7 @@
          width: calc(var(--button-size) / 1.4);
          border-radius: 50%; 
       }  
+
       input[type="radio"]::after {
          content: "";
          border-radius: 50%;
@@ -344,15 +357,17 @@
          transform: scale(0);
          transition: transform 100ms ease-in-out;
       }
+
       input[type="radio"]:checked::after { 
          transform: scale(1);
       }
+
 
       .toolbar {
          display: inline-flex;
          flex-flow: row nowrap;
          width: 100%;
-         height: 3rem; 
+         height: 2.8rem; 
       }
 
       .toolbar > button {
@@ -365,9 +380,10 @@
          content : attr(tool-name);
          position: absolute;
          top: 110%;
+
          left: 0%;
          width: 100%;
-         visibility: hidden;
+         visibility: hidden;  
       }
 
       .toolbar > button[active]::after {
@@ -411,24 +427,33 @@
       #translate-wrap-inner {
          transform: translateX(var(--pan-x)) translateY(var(--pan-y));
       } 
+
       #zoom-wrap-inner {
          transform: scale(var(--zoom-amount));
       }
+
       hypno-tiler {
          transform: rotate(var(--canvas-rotation));
       }
-   
-      
-      .reset-button svg {
-         left: -1px;
-      }
+       
+      label.checkbox-label { 
+         vertical-align: middle;
+         height: var(--button-size);
+         display:inline-block;
+         position: relative; 
+         width: min-content;
+         flex: 0 1 auto; 
+         font: inherit; 
+      } 
 
       #row-col-incrementers {
          margin-top: 1rem;
       }
+
       #row-col-incrementers > div {
          margin-top: .5rem;
       }
+
       #row-col-incrementers > div span:not(:first-child) { 
          flex: 0 0 auto; 
          display: inline-block; 
@@ -445,163 +470,71 @@
          margin-left: 2px;
          flex: 0 0 auto;   
       }
-
-      value-incrementer {
-         position: relative;
-         top: -2px;
-         display: inline-block;
-      }
  
-      value-incrementer button:first-child {
-         border-top-left-radius: 8px;
-         border-bottom-left-radius: 8px;
-         border-top-right-radius: 0px;
-         border-bottom-right-radius: 0px;
-      }
-      value-incrementer button:nth-child(2) {
-         border-top-right-radius: 8px;
-         border-bottom-right-radius: 8px;
-         border-top-left-radius: 0px;
-         border-bottom-left-radius: 0px;
-      }
-
-      range-input {
-         display: flex;
-         width: 100%;
-         flex-flow: row nowrap;
-         justify-content: center;
-         margin-bottom: .5rem;
-      }
-
-      range-input > * {
-         margin: 0;
-         padding: 0;
-         box-sizing: border-box;
-      } 
-
-      range-input value-incrementer { 
-         flex: 0 0 auto; 
-      }
-
-      range-input label { 
-         flex: 0 0 3.5rem;
-      }
-
-      range-input input {  
-         width: 20px;
-         flex: 1 1 auto;
-      }
-
-      range-input span {
-         display: inline-block;
-         margin-left: .4rem;
-         width: 3rem;
-         flex: 0 0 auto;
-      }
-
       label[for="canvas-tools-toolbar"] {
-         text-align: center;
-         letter-spacing: 2px;
+         text-align: center; 
          width: 100%;  
       } 
-
-      fancy-checkbox {
-         --size-fraction: calc(var(--button-size) / 16); 
-         display:        inline-flex;
-         vertical-align:      middle;
-         align-items:         center;
-         position:          relative;  
-         font:               inherit; 
-      }
-
-      fancy-checkbox input[type="checkbox"] {  
-         margin: 0 0 0 0;   
-         width: var(--button-size);   
-      }  
-
-        fancy-checkbox[disabled] {
-         pointer-events: none;
-         opacity: .6;
-      }
-
-      fancy-checkbox input[type="checkbox"]:not(:checked):not([disabled]) + svg.checkmark-graphic {
-         transform: scale(0);
-      }
-      fancy-checkbox input[type="checkbox"]:checked + svg.checkmark-graphic {
-         transform: scale(1);
-      }
-
-      fancy-checkbox svg.checkmark-graphic {
-         position: absolute; 
-         pointer-events: none;
-         left: var(--size-fraction);
-         top:  var(--size-fraction);  
-         height: calc(var(--button-size) - var(--size-fraction));
-         width:  calc(var(--button-size) - var(--size-fraction));
-         transition: 50ms transform linear; 
-         color: white;
-         transition: transform 60ms linear;
-         fill: currentcolor;
-         stroke-width: 2px;
-         stroke: currentcolor;
-      } 
-         
-      label.checkbox-label { 
-         vertical-align: middle;
-         height: var(--button-size);
-         display:inline-block;
-         position: relative; 
-         width: min-content;
-         flex: 0 1 auto; 
-         font: inherit; 
-      }
-
-
+ 
       .dash-section {
          margin: 0 0 1rem 0;
       }
 
-       .credits {
+      .credits {
          width: 100%;
          text-align: center;
-         opacity: .5;
-         letter-spacing: 1px;
+         opacity: .5; 
          font-size: 80%;
          line-height: 1.3rem; 
          margin-bottom: 0;
       }
-        
-
+         
       .spacer-section {
          height: 100%;
       }
 
-      #mirror-radio-select {
+      
+
+      #mirror-radio-select > div {
          display: inline-block;
       }
 
-      #mirror-radio-select label {
+      #mirror-radio-select > div > input {
+         margin-left: .3rem;
+      }
+
+      #mirror-radio-select > div > label {
          margin-right: 1rem;
       }
-
-     .section-title, .title-section { 
-         text-align: center; 
+      #mirror-radio-select > div:last-child > label {
+         margin-right: 0rem;
       }
-
-     .title-section { 
+     .section-title, .title-section {   
+         margin: .4rem 0 .4rem 0; 
+         font-size: 95%;
          font-weight: bold;
+         opacity: 0.8;
+          position: relative;
+         width: 100%;
+      }
+
+     .title-section {  
+         
+         font-size: 110%;
+         margin-top: 0!important;
+         font-family: monospace;
+         opacity: .7;
+         text-transform: lowercase;
          letter-spacing: 2px;
-         display: block; 
-         padding: .3rem; 
+         display: block;  
+         text-align: center;
      }
-              
-      .animate-properties-group > div.section-title {
-         text-align: left!important;
-      } 
-      .animate-properties-group > div:not(.section-title) {
-         display: inline-block;
+    
+      .animate-properties-group.control-section > div {
+         display: inline-block; 
          margin-right: 1rem;
-      } 
+      }  
+
       .animate-properties-group.automode-enabled div:not(.auto-toggle) label,
       .animate-properties-group.automode-enabled div:not(.auto-toggle) span {
          opacity: .5!important;
@@ -609,31 +542,142 @@
 
       input[type="radio"] + label {
          font-weight: normal;
-      }
-
-      #image-slider-controls {
-         margin-top: 1rem;
-      }
+      } 
 
       .github-icon {
          display: inline-block;
-         max-width: 2rem;
+         max-width: 1.5rem;
       }
+
       .github-icon svg {
          position: relative;
-         width: 100%;
-
+         width: 100%; 
       }
 
       .app-wrap.last {
          display: grid;
          place-content: center;
       } 
+
       hypno-tiler[reflect="6"],
       hypno-tiler[reflect="12"] {
-         margin-top:25%;
+         margin-top: calc(var(--tile-width) / 2);
+      }
+
+      #edit-image-controls > *:first-child {
+         border-top-left-radius: 10px;
+         border-top-right-radius: 10px;
+      }
+
+      #edit-image-controls > *:last-child {
+         border-bottom-left-radius: 10px;
+         border-bottom-right-radius: 10px;
+      }
+
+      #edit-image-controls > * {
+         width: 100%; 
+         box-sizing: border-box;
       }
        
+      .image-control-group {
+         border-radius: 0;
+         aspect-ratio: initial;
+      }
+
+      .image-control-group > * {
+         box-sizing: border-box;
+      }
+
+      .image-control-group > .display-section { 
+         font-size: 95%;
+         position: relative;
+         width: 100%;
+         padding: 0;
+      } 
+
+      .image-control-group > .control-section {
+         position: relative;
+      } 
+
+      .image-control-group > .display-section > div {
+         padding: .4rem .5rem .4rem 1rem;
+         display: block;  
+         display: flex;
+         flex-flow: row nowrap;
+         width: 100%;
+      }
+
+      .image-control-group > .display-section > div > span:first-child {
+         opacity: .8;
+         flex: 0 0 9rem;    
+         font-size: 95%;
+         display: inline-block;
+      }
+
+      .image-control-group[active] > .display-section > div > span:first-child {
+         opacity: 1;
+      }
+
+      .image-control-group > .display-section > div > span + span{
+         display: inline-block;
+      } 
+      
+      .image-control-group > .control-section {
+         padding: 0;
+         visibility:  hidden;
+         height: 0;        
+      }
+      
+      .image-control-group[active] > .control-section {
+         padding: 0 .5rem .5rem .5rem;    
+         visibility:  visible; 
+         height: auto;
+         font-size: 90%;
+      }
+
+      #pattern-size-control > .control-section > div {
+       display: inline-block;  
+      }
+
+      #pattern-size-control > .control-section > div + div {
+        margin-left: .5rem;
+      }
+
+      .auto-toggle {
+         display:block!important;
+      }
+
+      .display-section svg {
+         min-width: 20px;
+         margin-left:10px;
+      }
+
+
+      #edit-image-button,
+      #image-url-button { 
+         display: inline-block; 
+         margin-left: 1rem;
+      } 
+      #edit-image-button svg,
+      #image-url-button svg {
+         fill: white;
+         opacity: .7;
+         position: relative;
+         top: 2px;
+         min-width: 18px;
+      }
+      #image-url-button:hover,
+      #edit-image-button:hover {
+         transform: scale(1.1);
+      }
+      #image-url-button:hover svg,
+      #edit-image-button:hover svg {
+         opacity: 1
+      }
+
+
+      
+      
    </style>
 
 
@@ -653,88 +697,171 @@
 
          <div id="inner-dash" class="inner-wrapper">    
 
-            <div class="title-section"><span>hypnotiler 0.3</span></div>
- 
-            <image-uploader start-open class="checkered-background dash-section"></image-uploader>
+            <div class="title-section"><span>Hypnotiler 0.4</span></div>
+            
+            <div class="section-title">
+               Source Image
+               <div id="edit-image-button">  
+                  <svg  viewBox="0 0 28 28">
+                     <path d="M26 9v16c0 2-1 3-3 3H3c-2 0-3-1-3-3V5c0-2 1-3 3-3h16l-3 3H5C3 5 3 5 3 7v16c0 2 0 2 2 2h16c2 0 2 0 2-2V12l3-3ZM9 14 20 3c2 0 5 3 5 5L14 19l-6 2H7v-1l2-6Zm.5 1-1 3c1 0 1.5 1.5 1.5 1.5l3-1C13 17 11 15 9.5 15Zm.5-1h1L21 4h-1L10 14ZM28 4c0 1-1 2-1 2l-1.5 1.5c0-2-3-5-5-5L22 1s1-1 2-1c2 0 4 2 4 4Z"/>
+                  </svg>
+               </div>
+            </div>
+            
+            
+            <div class="img-upload-frame">
+               <image-uploader start-open class="checkered-background dash-section"></image-uploader>
+            </div>
          
             <div class="section-title">Canvas Tools</div>
             <div id="canvas-tools-toolbar" class="dash-section toolbar"> 
-               <button active tool-name="move" type="button">
+               <button active tool-name="Move" type="button">
                   <svg viewBox="0 0 56 57"><path d="M45.7 8.2c.7-.3 1.7-.4 2.7-.4 7.5 0 7.5 7.5 7.5 7.5V36a22 22 0 0 1-7.8 16.5c-3 2.6-6.6 4-9.7 4H23.5c-.8 0-10.1.3-18.2-12.1A30 30 0 0 1 0 28.5c0-3.6 1-6.7 3-9 1.9-2 4.4-3.4 8-3.8V10s0-7.5 7.4-7.5a8 8 0 0 1 3.7.8C23.1 1.6 25 0 28.4 0c3.5 0 5.3 1.6 6.3 3.3a8 8 0 0 1 3.7-.8c5.1 0 6.7 3.4 7.3 5.7ZM10.9 20.7c-8.2 1.7-7.2 12-1.4 21 6.6 10 13.8 9.8 13.8 9.8h15.1c2.1 0 4.4-1.1 6.5-2.9 3.3-2.8 6-7.4 6-12.6V15.2s0-2.4-2.5-2.4C46 12.8 46 14 46 15.2a2.5 2.5 0 1 1-5 0V10s0-2.5-2.5-2.5S36 10 36 10v5.5a2.5 2.5 0 0 1-5 0v-8S31 5 28.4 5 26 7.5 26 7.5v7.8a2.5 2.5 0 0 1-5 0V10s0-2.5-2.5-2.5S16 10 16 10v15a2.5 2.5 0 0 1-5 0v-4.3Z"/></svg>
                </button>
-               <button tool-name="twist" type="button">
+               <button tool-name="Twist" type="button">
                   <svg viewBox="0 0 280 309"><path d="M145 0v26h-10V0h10Zm0 45v26h-10V45h10Zm0 89v26h-10v-26h10Zm0-44v26h-10V90h10Zm0 149v26h-10v-26h10Zm0 44v26h-10v-26h10ZM0 130v-4c0-24 52-44 120-48v30c-54 3-98 16-111 34-1 1-9-12-9-12Zm0 38v-23c6 15 46 30 95 36v32c-55-6-95-24-95-45Zm175-9v24c54-5 98-21 105-38v23c0 22-45 41-105 46v25l-62-40 62-40Zm-15-81c68 4 120 24 120 48v4s-8 13-9 12c-13-18-56-31-111-34V78Z"/></svg>
                </button>
-               <button tool-name="pan" type="button">
+               <button tool-name="Pan" type="button">
                   <svg viewBox="0 0 50 50"><path d="m0 25 10-9v5h11V10h-5l9-10 9 10h-5v11h11v-5l10 9-10 9v-5H29v11h5l-9 10-9-10h5V29H10v5L0 25Z"/></svg>
                </button>  
             </div>
 
             <div class="dash-section"></div>
 
+            <div class="section-title">Settings</div>
             <div id="image-slider-controls" class="dash-section">
-               <range-input label="Scale" id="image-scale-input-slider" unit="%" min="20" max="600" step="1" value="250"> 
-               </range-input>
-               <range-input label="Zoom" id="zoom-input-slider" unit="%" min="10" max="500" step="2" value="100"> 
-               </range-input>
-               <range-input label="Rotate" id="rotate-input-slider" unit="°" min="0" max="360" step="15" value="0"> 
-               </range-input>
-            </div>
-
-            <div class="dash-section">
-               <span class="section-title">Num. of Mirrors</span>
-
-               <div id="mirror-radio-select">
-                 <input autocomplete="off" type="radio" id="mirror4" name="age" value="4">
-                 <label for="mirror4">4</label>
-                 <input autocomplete="off" checked type="radio" id="mirror6" name="age" value="6">
-                 <label for="mirror6">6</label>
-                 <input autocomplete="off" type="radio" id="mirror8" name="age" value="8">
-                 <label for="mirror8">8</label>
-                 <input autocomplete="off" type="radio" id="mirror12" name="age" value="12">
-                 <label for="mirror12">12</label>
-               </div> 
-            </div>
-       
-            <div class="dash-section" id="animation-control-area">  
-
-               <div class="animate-properties-group">
-                  <div class="section-title">Animate:</div>
-                  <div class="auto-toggle">
-                     <fancy-checkbox checked id="animate-auto-toggle"></fancy-checkbox>  
-                     <span>Auto</span>
+               <div id="edit-image-controls">
+                  <div class="image-control-group" active>
+                     <div class="display-section"> 
+                        <div>
+                           <span>Num. of Mirrors</span>
+                           <span id="reflect-value-display"></span>   
+                        </div>                        
+                     </div>
+                     <div class="control-section">
+                         <div id="mirror-radio-select">
+                           <div>
+                              <input autocomplete="off" type="radio" id="mirror4" name="age" value="4">
+                              <label for="mirror4">4</label>
+                           </div>                              
+                          <div>
+                              <input autocomplete="off" checked type="radio" id="mirror6" name="age" value="6">
+                              <label for="mirror6">6</label>
+                           </div>
+                          <div>
+                              <input autocomplete="off" type="radio" id="mirror8" name="age" value="8">
+                              <label for="mirror8">8</label>
+                           </div>
+                          <div>
+                              <input autocomplete="off" type="radio" id="mirror12" name="age" value="12">
+                              <label for="mirror12">12</label>
+                           </div>
+                        </div> 
+                     </div>                     
                   </div>
-                  <div>
-                     <fancy-checkbox id="animate-x-toggle"></fancy-checkbox>
-                     <span>X</span>
+                  <div class="image-control-group">
+                     <div class="display-section"> 
+                        <div>
+                           <span>Image Scale</span>
+                           <span id="image-scale-value-display"></span>   
+                        </div>                        
+                     </div>
+                     <div class="control-section">
+                        <range-input id="image-scale-input-slider" unit="%" min="20" max="600" step="1" value="250"> 
+                        </range-input>      
+                     </div>                     
                   </div>
-
-                  <div>
-                     <fancy-checkbox id="animate-y-toggle"></fancy-checkbox>
-                     <span>Y</span>
+                  <div class="image-control-group">
+                     <div class="display-section"> 
+                        <div>
+                           <span>Tile Size</span>
+                           <span id="tile-width-value-display"></span>
+                        </div>
+                     </div>
+                     <div class="control-section">
+                        <range-input id="tile-width-input-slider" unit="px" min="80" max="1280" step="2" value="240"> 
+                        </range-input>
+                     </div>
                   </div>
-
-                  <div>
-                     <fancy-checkbox id="animate-rotate-toggle"></fancy-checkbox>  
-                     <span>Twist</span>
+                  <div id="animate-control-group" class="image-control-group">
+                     <div class="display-section">
+                        <div>
+                           <span>Animate</span>
+                           <span id="animate-value-display"></span>
+                        </div>
+                     </div>
+                     <div class="animate-properties-group control-section">
+                        <div class="auto-toggle">
+                           <fancy-checkbox checked id="animate-auto-toggle"></fancy-checkbox>  
+                           <span>Auto</span>
+                        </div>
+                        <div>
+                           <fancy-checkbox id="animate-x-toggle"></fancy-checkbox>
+                           <span>X</span>
+                        </div> 
+                        <div>
+                           <fancy-checkbox id="animate-y-toggle"></fancy-checkbox>
+                           <span>Y</span>
+                        </div> 
+                        <div>
+                           <fancy-checkbox id="animate-rotate-toggle"></fancy-checkbox>  
+                           <span>Rotate</span>
+                        </div> 
+                     </div>
+                  </div>
+                  <div id="pattern-size-control" class="image-control-group">
+                     <div class="display-section">
+                        <div>
+                           <span>Pattern Size</span>
+                           <span>
+                              <span id="rows-display"></span>
+                              <span>&nbsp;x&nbsp;</span>
+                              <span id="columns-display"></span>
+                           </span>
+                        </div>
+                     </div>
+                     <div class="control-section"> 
+                        <div>
+                           <span>Rows</span>  
+                           <value-incrementer id="rows-incrementer"></value-incrementer>
+                        </div>  
+                        <div>
+                           <span>Columns</span>  
+                           <value-incrementer id="columns-incrementer"></value-incrementer>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="image-control-group">                  
+                     <div class="display-section"> 
+                        <div>
+                           <span>Zoom</span>
+                           <span id="zoom-amount-value-display"></span>   
+                        </div>                        
+                     </div>
+                     <div class="control-section">
+                        <range-input id="zoom-amount-input-slider" unit="%" min="10" max="500" step="2" value="100"> 
+                        </range-input>
+                     </div>
+                  </div>
+                  <div class="image-control-group">
+                     <div class="display-section"> 
+                        <div>
+                           <span>Rotate</span>
+                           <span id="canvas-rotation-value-display"></span>   
+                        </div>                        
+                     </div>
+                     <div class="control-section">
+                        <range-input id="canvas-rotation-input-slider" unit="deg" min="-360" max="360" step="15" value="0"> 
+                        </range-input>
+                     </div>
                   </div> 
-
+                  
                </div>
-
+ 
             </div>
 
-            <div id="row-col-incrementers" class="dash-section">
-               <div>
-                  <span>Columns</span> 
-                  <span id="columns-display"></span>
-                  <value-incrementer id="columns-incrementer"></value-incrementer>
-               </div>
-               <div>
-                  <span>Rows</span> 
-                  <span id="rows-display"></span>
-                  <value-incrementer id="rows-incrementer"></value-incrementer>
-               </div> 
-            </div>
+            
+       
 
             <div class="dash-section spacer-section">               
             </div>
@@ -805,6 +932,34 @@
    <script>
 
       (function(){ 
+
+         const btnAndInputStyles = {
+
+            base:`
+            appearance: none;
+            color: white;
+            cursor: pointer;  
+            position: relative;   
+            display: inline-block;
+            vertical-align: middle;
+            width: var(--button-size);
+            aspect-ratio: 1 / 1;
+            max-height: 100%;
+            background-color: rgb(255 255 255 / .1);
+            border-radius: .2rem;
+            outline: 0.1rem solid rgb(0 0 0 / .1); 
+            box-shadow: rgb(0 0 0 / .4)       -1px -1px 1px 1px inset,
+                        rgb(255 255 255 / .1)  1px  1px 1px 1px inset;`,
+ 
+            active: `box-shadow: rgb(0 0 0 / .4)         1px  1px 1px 1px inset,
+                     rgb(255 255 255 / .1)  -1px -1px 1px 1px inset; 
+                     background-color: rgb(0 0 0 / .1);`,
+            hover : `background-color: rgb(255 255 255 / .2);
+         outline: 0.1rem solid rgb(0 0 0 / .2); 
+         box-shadow: rgb(0 0 0 / .3)       -1px -1px 1px 1px inset,
+                     rgb(255 255 255 / .2)  1px  1px 1px 1px inset; `
+         }
+     
          
          const IMG_FILE_EXTENSIONS = ['jpg','jpeg','png','gif','svg','heic','webp'];
 
@@ -1049,16 +1204,71 @@
          //   the +/- UI component
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-         customElements.define('value-incrementer', class extends SimpleComponent{ 
+         customElements.define('value-incrementer', class extends ShadowComponent{ 
             constructor() {
                super();
+
+               this.styles = ` 
+                  :host {
+                     position: relative; 
+                     display: inline-block;
+                  }
+
+                  button {
+                     border: none;
+                     outline: none;
+                     ${btnAndInputStyles.base}
+                     padding:none;
+                  }
+                  button:hover {
+                     ${btnAndInputStyles.hover}
+                  }
+                  button[active],
+                  button:active {
+                     border: none; outline: none;
+                     ${btnAndInputStyles.active}
+                  }
+                   
+                  button:first-child {
+                     border-top-left-radius: 8px;
+                     border-bottom-left-radius: 8px;
+                     border-top-right-radius: 0px;
+                     border-bottom-right-radius: 0px;
+                  }
+
+                  button:nth-child(2) {
+                     border-top-right-radius: 8px;
+                     border-bottom-right-radius: 8px;
+                     border-top-left-radius: 0px;
+                     border-bottom-left-radius: 0px;
+                  }
+
+                  button >  svg {
+                     fill: currentcolor;
+                     position: relative;
+                     top: 1px;
+                     transform: none;
+                  }
+
+                  button:active > svg { 
+                     transform: translate(1px, 1px);
+                  }
+
+                  button >  svg > path {
+                     fill: inherit;
+                  }
+
+                  .reset-button svg {
+                     left: -1px;
+                  }`;
+
                this.template = `<div>  
                      <button class="minus-button"  type="button">
-                        <svg class="minus-button" width="100%" height="100%" viewBox="0 0 64 64">
+                        <svg class="minus-button" viewBox="0 0 64 64">
                             <path d="M50,27L14,27C12,27 11,28 11,30L11,34C11,36 12,37 14,37L50,37C52,37 53,36 53,34L53,30C53,28 52,27 50,27Z"/>
                         </svg>
                      </button><button class="plus-button"  type="button">
-                        <svg class="plus-button" width="100%" height="100%" viewBox="0 0 64 64">
+                        <svg class="plus-button" viewBox="0 0 64 64">
                             <path d="M27,14L27,50C27,52 28,53 30,53L34,53C36,53 37,52 37,50L37,14C37,12 36,11 34,11L30,11C28,11 27,12 27,14Z"/>
                             <path d="M50,27L14,27C12,27 11,28 11,30L11,34C11,36 12,37 14,37L50,37C52,37 53,36 53,34L53,30C53,28 52,27 50,27Z"/>
                         </svg>  
@@ -1072,7 +1282,7 @@
             connectedCallback() {
                const detail = { value: 0 }
                this.event = new CustomEvent('increment', { detail, bubbles: true, composed: true })
-               this.querySelectorAll('button').forEach(btnEl=> {
+               this.shadowRoot.querySelectorAll('button').forEach(btnEl=> {
                   btnEl.addEventListener('click', e=> {
                      detail.value = btnEl.getAttribute('class').split('-')[0];
                      this.dispatchEvent(this.event);
@@ -1087,7 +1297,7 @@
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
     
 
-         customElements.define('range-input', class extends SimpleComponent{
+         customElements.define('range-input', class extends ShadowComponent{
 
             constructor() { super()
     
@@ -1099,52 +1309,58 @@
                this.unit = this.getAttribute('unit') ?? ''
                this.originalValue = this.currentValue;
 
-               this.template =` 
-                  <label for="range-input"></label>
+               this.styles = `
+                  :host {
+                     display: flex;
+                     flex-flow: row nowrap;
+                     width: 100%;
+                  }
+                  input {
+                     flex: 1 1 auto;
+                     width: 100%;
+                  }
+                  value-incrementer {
+                     flex: 0 0 5.5rem;
+                  }
+               `;
+
+               this.template =`
                   <input name="range-input"
                          type ="range" 
                          min  ="${this.min}"
                          max  ="${this.max}"
                          step ="${this.step}"
-                         value="${this.currentValue}" />
-                  <span>${this.currentValue + this.unit}</span>
-                  <value-incrementer show-reset></value-incrementer>`; 
+                         value="${this.currentValue}" /> 
+                  <value-incrementer show-reset></value-incrementer>
+               `; 
             } 
 
             
 
-            connectedCallback() {
+            connectedCallback() { 
     
-               this.valueDisplay = this.querySelector('span');
-               this.inputEl      = this.querySelector('input');
-
-               this.inputEl.id = this.tagName.toLowerCase() + SimpleComponent.componentCount;
-               this.querySelector('label').setAttribute('for',this.tagName.toLowerCase() + SimpleComponent.componentCount)
-
-               if (this.hasAttribute('label')) {
-                  this.querySelector('label').innerHTML = this.getAttribute('label')
-               }
+               
+               this.inputEl = this.shadowRoot.querySelector('input'); 
 
                const detail = { value: Number(this.getAttribute('value') ?? "0"), from: 'input' }
 
                this.event = new CustomEvent('range-change', { composed: true, bubbles: true, detail })
-
-              
+ 
                this.setNewValue = function(val,from) { 
                   detail.value = val;
                   detail.from  = from;
                   this.currentValue = val;
-                  this.inputEl.value = val;
-                  this.valueDisplay.innerHTML = Math.round(val) + this.unit;
+                  this.inputEl.value = val; 
                   if (from!=='outside'){
                      this.dispatchEvent(this.event);   
                   }               
                }
 
-               this.querySelector('input').addEventListener('input', e => {  
+               this.shadowRoot.querySelector('input').addEventListener('input', e => {  
                   this.setNewValue(Number(e.originalTarget?.value ?? e.target.value), 'input') 
                })
-               this.querySelector('value-incrementer').addEventListener('increment', e=> { 
+
+               this.shadowRoot.querySelector('value-incrementer').addEventListener('increment', e=> { 
                   if (e.detail.value === 'reset') {
                      this.setNewValue(this.originalValue, 'increment')
                   } else {
@@ -1160,10 +1376,65 @@
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-         customElements.define('fancy-checkbox', class extends SimpleComponent {
+         customElements.define('fancy-checkbox', class extends ShadowComponent {
 
             constructor() {
                super()
+
+               this.styles = `
+
+                  :host {
+                     --size-fraction: calc(var(--button-size) / 16); 
+                     display:        inline-flex;
+                     vertical-align:      middle;
+                     align-items:         center;
+                     position:          relative;  
+                     font:               inherit; 
+
+                  }
+
+                  input[type="checkbox"] {  
+                     ${btnAndInputStyles.base}
+                     margin: 0 0 0 0;   
+                     width: var(--button-size);   
+                  }  
+
+                  input[type="checkbox"]:active,
+                  input[type="checkbox"][active] {
+                     ${btnAndInputStyles.active}
+                  }
+
+                  input[type="checkbox"]:hover {
+                     ${btnAndInputStyles.hover}
+                  }
+
+                  :host([disabled]) {
+                     pointer-events: none;
+                     opacity: .6;
+                  }
+
+                  input[type="checkbox"]:not(:checked):not([disabled]) + svg.checkmark-graphic {
+                     transform: scale(0);
+                  }
+                  input[type="checkbox"]:checked + svg.checkmark-graphic {
+                     transform: scale(1);
+                  }
+
+                  svg.checkmark-graphic {
+                     position: absolute; 
+                     pointer-events: none;
+                     left: var(--size-fraction);
+                     top:  var(--size-fraction);  
+                     height: calc(var(--button-size) - (var(--size-fraction) * 3));
+                     width:  calc(var(--button-size) - (var(--size-fraction) * 3));
+                     transition: 50ms transform linear; 
+                     color: white;
+                     transition: transform 60ms linear;
+                     fill: currentcolor;
+                     stroke-width: 2px;
+                     stroke: currentcolor;
+                  }`;
+
                this.template = `<input type="checkbox" name="fancy-checkbox-input"/>
                   <svg class="checkmark-graphic" viewBox="0 0 32 32">
                      <path d="M3 22c-1-1-.5-1.3 0-2l1-1c.5-.5 1.5-.5 2 0l5 4s1 1 2 0L26 2c.3-.5.5-.3 1 0l2 1c1 .5.5 1 0 2L14 30c-.5.5-1.5.5-2 0l-9-8Z"/>
@@ -1173,12 +1444,13 @@
             connectedCallback() { 
                const detail = { toggle: this.hasAttribute('checked') }
                if (this.hasAttribute('checked')){
-                  this.querySelector('input').checked = true;
-                  this.removeAttribute('checked')
+                  this.shadowRoot.querySelector('input').checked = true;
+                  //this.removeAttribute('checked')
                }
                this.event = new CustomEvent('toggle-check', { detail, bubbles: true, composed: true })
-               this.querySelector('input').addEventListener('click', e=> { 
+               this.shadowRoot.querySelector('input').addEventListener('click', e=> { 
                      detail.toggle = e.target.checked
+                     toggleAttr(this, 'checked', detail.toggle)
                      this.dispatchEvent(this.event); 
                })
             }
@@ -1235,13 +1507,15 @@
                               backface-visibility: hidden;
                         }  
 
-                        :host([reflect="6"]), :host([reflect="12"]) {
+                        :host([reflect="6"]),
+                        :host([reflect="12"]) {
                            --hex-width:      calc(var(--tile-width) * calc(4 / 3));
                            --hex-halfheight: calc(calc(var(--hex-width) * cos(30deg)) / 2) ;
                            --tri-size:       calc(var(--tile-width) * calc(2 / 3));
                         }
                        
-                        :host([reflect="4"]), :host([reflect="8"]) {
+                        :host([reflect="4"]),
+                        :host([reflect="8"]) {
                            --tri-size: calc(var(--tile-width) / 2);
                         }
 
@@ -1274,140 +1548,145 @@
                            background-position: var(--image-position); 
                            background-size:        var(--image-scale);
                            transform:           var(--image-rotation); 
-                        }
-
-                        :host([reflect="4"]) { 
-                         
-                           .tile-group {     
-                              width: var(--tile-width);
-                              height: var(--tile-width);   
-                           }
-
-                           .tri {  
-                              transform-origin: bottom right;
-                              
-                              clip-path: polygon(
-                                 -0.5px -0.5px,
-                                 -0.5px calc(100% + 0.5px),
-                                 calc(100% + 0.5px) calc(100% + 0.5px),
-                                 calc(100% + 0.5px) -0.5px
-                              );
-                           }  
-
-                           .tri:nth-child(1)  { }
-                           .tri:nth-child(2)  {  transform: scaleY(-1);  }
-                           .tri:nth-child(3)  {  transform: scaleX(-1) scaleY(-1); }
-                           .tri:nth-child(4)  {  transform: scaleX(-1);  }
-                           .tri:nth-child(5), .tri:nth-child(6), .tri:nth-child(7),
-                           .tri:nth-child(8), .tri:nth-child(9), .tri:nth-child(10),
-                           .tri:nth-child(11), .tri:nth-child(12) { 
-                              display: none;
-                           }
-                        } 
-
-                        :host([reflect="6"]) { 
-                         
-                           .tile-column:nth-child(even) {  
-                              top: calc(calc(var(--hex-halfheight) * -1));  
-                           }  
-
-                           .tile-group {   
-                              height:      var(--hex-halfheight);  
-                              padding-top: var(--hex-halfheight);
-                           }
-
-                           .tri {  
-                              transform-origin: top center;
-                              clip-path: polygon(
-                                 calc(50% + .5px) 0,
-                                 calc(50% - .5px) 0,
-                                 0px 86%,
-                                 0px calc(86.6% + 1px),
-                                 100% calc(86.6% + 1px),
-                                 100% 86%
-                              );  
-                           }  
-
-                           .tri:nth-child(1) { }
-                           .tri:nth-child(2) {  transform: rotate(60deg) scaleX(-1);  }
-                           .tri:nth-child(3) {  transform: rotate(120deg); }
-                           .tri:nth-child(4) {  transform: rotate(180deg) scaleX(-1); }
-                           .tri:nth-child(5) {  transform: rotate(240deg); }
-                           .tri:nth-child(6) {  transform: rotate(-60deg) scaleX(-1); } 
-                           .tri:nth-child(7), .tri:nth-child(8), .tri:nth-child(9),
-                           .tri:nth-child(10), .tri:nth-child(11), .tri:nth-child(12) {
-                              display: none;
-                           } 
                         } 
                          
-                        :host([reflect="8"]) { 
-
-                           .tile-group {    
-                              height: var(--tile-width);   
-                           }
-
-                           .tri {  
-                              transform-origin: bottom right;
-                              clip-path: polygon(
-                                 -0.5px -0.5px,
-                                 calc(100% + 0.5px) -0.5px,
-                                 calc(100% + 0.5px) calc(100% + 0.5px),
-                                 calc(100% - 0.5px) calc(100% + 0.5px),
-                                 -0.5px 0
-                              ); 
-                           } 
-
-                           .tri:nth-child(1) { }
-                           .tri:nth-child(2) { transform: translateX(0%) scaleX(-1); }
-                           .tri:nth-child(3) { transform: rotate(180deg); }
-                           .tri:nth-child(4) { transform: rotate(180deg) scaleX(-1); }
-                           .tri:nth-child(5) { transform: rotate(270deg)  ;}
-                           .tri:nth-child(6) { transform: rotate(270deg) scaleX(-1); }
-                           .tri:nth-child(7) { transform: rotate(90deg); } 
-                           .tri:nth-child(8) { transform: rotate(90deg) scaleX(-1); } 
-                           .tri:nth-child(9),  .tri:nth-child(10),
-                           .tri:nth-child(11), .tri:nth-child(12) {
-                              display: none;
-                           } 
+                       :host([reflect="4"]) .tile-group {     
+                           width: var(--tile-width);
+                           height: var(--tile-width);   
                         }
 
-                        :host([reflect="12"]) {  
+                       :host([reflect="4"]) .tri {  
+                           transform-origin: bottom right; 
+                           clip-path: polygon(
+                              -0.5px -0.5px,
+                              -0.5px calc(100% + 0.5px),
+                              calc(100% + 0.5px) calc(100% + 0.5px),
+                              calc(100% + 0.5px) -0.5px
+                           );
+                        }  
 
-                           .tile-column:nth-child(even) {  
-                              top: calc(var(--hex-halfheight) * -1);  
-                           }  
+                       :host([reflect="4"]) .tri:nth-child(1)  { }
+                       :host([reflect="4"]) .tri:nth-child(2)  {  transform: scaleY(-1);  }
+                       :host([reflect="4"]) .tri:nth-child(3)  {  transform: scaleX(-1) scaleY(-1); }
+                       :host([reflect="4"]) .tri:nth-child(4)  {  transform: scaleX(-1);  }
+                       :host([reflect="4"]) .tri:nth-child(5),
+                       :host([reflect="4"]) .tri:nth-child(6),
+                       :host([reflect="4"]) .tri:nth-child(7),
+                       :host([reflect="4"]) .tri:nth-child(8),
+                       :host([reflect="4"]) .tri:nth-child(9),
+                       :host([reflect="4"]) .tri:nth-child(10),
+                       :host([reflect="4"]) .tri:nth-child(11),
+                       :host([reflect="4"]) .tri:nth-child(12) { 
+                           display: none;
+                        }
+                     
 
-                           .tile-group {   
-                              height:      var(--hex-halfheight);  
-                              padding-top: var(--hex-halfheight);
-                           }
+           
+                         
+                       :host([reflect="6"]) .tile-column:nth-child(even) {  
+                           top: calc(calc(var(--hex-halfheight) * -1));  
+                        }  
 
-                           .tri {  
-                              width: calc(var(--tri-size) / 2);
-                              transform-origin: top right;
+                       :host([reflect="6"]) .tile-group {   
+                           height:      var(--hex-halfheight);  
+                           padding-top: var(--hex-halfheight);
+                        }
 
-                              clip-path: polygon(
-                                 calc(100% + 0.5px) 0,
-                                 calc(100% + 0.5px) calc(86.6% + 0.5px),
-                                 -0.5px calc(86.6% + 0.5px),
-                                 -0.5px 86.6%, 
-                                 calc(100% - 0.5px) 0
-                              );  
-                           }  
+                       :host([reflect="6"]) .tri {  
+                           transform-origin: top center;
+                           clip-path: polygon(
+                              calc(50% + .5px) 0,
+                              calc(50% - .5px) 0,
+                              0px 86%,
+                              0px calc(86.6% + 1px),
+                              100% calc(86.6% + 1px),
+                              100% 86%
+                           );  
+                        }  
 
-                           .tri:nth-child(1)  { }
-                           .tri:nth-child(2)  {  transform: scaleX(-1); }
-                           .tri:nth-child(3)  {  transform: rotate(60deg) scaleX(-1); }
-                           .tri:nth-child(4)  {  transform: rotate(-60deg); }
-                           .tri:nth-child(5)  {  transform: rotate(60deg); } 
-                           .tri:nth-child(6)  {  transform: scaleX(-1) rotate(60deg); } 
-                           .tri:nth-child(8)  {  transform: scaleY(-1); } 
-                           .tri:nth-child(7)  {  transform: scaleY(-1) scaleX(-1); } 
-                           .tri:nth-child(9)  {  transform: scaleY(-1) rotate(60deg); } 
-                           .tri:nth-child(10) {  transform: scaleY(-1) rotate(60deg) scaleX(-1);  } 
-                           .tri:nth-child(11) {  transform: scaleY(-1) rotate(-60deg);  } 
-                           .tri:nth-child(12) {  transform: scaleY(-1) rotate(-60deg) scaleX(-1); } 
-                        }`;
+                       :host([reflect="6"]) .tri:nth-child(1) { }
+                       :host([reflect="6"]) .tri:nth-child(2) {  transform: rotate(60deg) scaleX(-1);  }
+                       :host([reflect="6"]) .tri:nth-child(3) {  transform: rotate(120deg); }
+                       :host([reflect="6"]) .tri:nth-child(4) {  transform: rotate(180deg) scaleX(-1); }
+                       :host([reflect="6"]) .tri:nth-child(5) {  transform: rotate(240deg); }
+                       :host([reflect="6"]) .tri:nth-child(6) {  transform: rotate(-60deg) scaleX(-1); } 
+                       :host([reflect="6"]) .tri:nth-child(7),
+                       :host([reflect="6"]) .tri:nth-child(8),
+                       :host([reflect="6"]) .tri:nth-child(9),
+                       :host([reflect="6"]) .tri:nth-child(10),
+                       :host([reflect="6"]) .tri:nth-child(11),
+                       :host([reflect="6"]) .tri:nth-child(12) {
+                           display: none;
+                        } 
+                   
+                         
+                      
+
+                       :host([reflect="8"]) .tile-group {    
+                           height: var(--tile-width);   
+                        }
+
+                       :host([reflect="8"]) .tri {  
+                           transform-origin: bottom right;
+                           clip-path: polygon(
+                              -0.5px -0.5px,
+                              calc(100% + 0.5px) -0.5px,
+                              calc(100% + 0.5px) calc(100% + 0.5px),
+                              calc(100% - 0.5px) calc(100% + 0.5px),
+                              -0.5px 0
+                           ); 
+                        } 
+
+                       :host([reflect="8"]) .tri:nth-child(1) { }
+                       :host([reflect="8"]) .tri:nth-child(2) { transform: translateX(0%) scaleX(-1); }
+                       :host([reflect="8"]) .tri:nth-child(3) { transform: rotate(180deg); }
+                       :host([reflect="8"]) .tri:nth-child(4) { transform: rotate(180deg) scaleX(-1); }
+                       :host([reflect="8"]) .tri:nth-child(5) { transform: rotate(270deg)  ;}
+                       :host([reflect="8"]) .tri:nth-child(6) { transform: rotate(270deg) scaleX(-1); }
+                       :host([reflect="8"]) .tri:nth-child(7) { transform: rotate(90deg); } 
+                       :host([reflect="8"]) .tri:nth-child(8) { transform: rotate(90deg) scaleX(-1); } 
+                       :host([reflect="8"]) .tri:nth-child(9), 
+                       :host([reflect="8"]) .tri:nth-child(10),
+                       :host([reflect="8"]) .tri:nth-child(11),
+                       :host([reflect="8"]) .tri:nth-child(12) {
+                           display: none;
+                        } 
+                      
+
+                       :host([reflect="12"]) .tile-column:nth-child(even) {  
+                           top: calc(var(--hex-halfheight) * -1);  
+                        }  
+
+                       :host([reflect="12"]) .tile-group {   
+                           height:      var(--hex-halfheight);  
+                           padding-top: var(--hex-halfheight);
+                        }
+
+                       :host([reflect="12"]) .tri {  
+                           width: calc(var(--tri-size) / 2);
+                           transform-origin: top right; 
+                           clip-path: polygon(
+                              calc(100% + 0.5px) 0,
+                              calc(100% + 0.5px) calc(86.6% + 0.5px),
+                              -0.5px calc(86.6% + 0.5px),
+                              -0.5px 86.6%, 
+                              calc(100% - 0.5px) 0
+                           );  
+                        }  
+
+                       :host([reflect="12"]) .tri:nth-child(1)  { }
+                       :host([reflect="12"]) .tri:nth-child(2)  {  transform: scaleX(-1); }
+                       :host([reflect="12"]) .tri:nth-child(3)  {  transform: rotate(60deg) scaleX(-1); }
+                       :host([reflect="12"]) .tri:nth-child(4)  {  transform: rotate(-60deg); }
+                       :host([reflect="12"]) .tri:nth-child(5)  {  transform: rotate(60deg); } 
+                       :host([reflect="12"]) .tri:nth-child(6)  {  transform: scaleX(-1) rotate(60deg); } 
+                       :host([reflect="12"]) .tri:nth-child(8)  {  transform: scaleY(-1); } 
+                       :host([reflect="12"]) .tri:nth-child(7)  {  transform: scaleY(-1) scaleX(-1); } 
+                       :host([reflect="12"]) .tri:nth-child(9)  {  transform: scaleY(-1) rotate(60deg); } 
+                       :host([reflect="12"]) .tri:nth-child(10) {  transform: scaleY(-1) rotate(60deg) scaleX(-1);  } 
+                       :host([reflect="12"]) .tri:nth-child(11) {  transform: scaleY(-1) rotate(-60deg);  } 
+                       :host([reflect="12"]) .tri:nth-child(12) {  transform: scaleY(-1) rotate(-60deg) scaleX(-1); } 
+                        `;
 
                      this.template = ``;
                   }
@@ -1415,9 +1694,6 @@
                      for (let i=0; i<((window.innerWidth / 240)+3); i++) {
                        this.shadowRoot.appendChild(createTileColumnNode(((window.innerHeight / 240)+3)))
                      }   
-                     //for (let i=0; i<3; i++) {
-                     //   this.shadowRoot.appendChild(createTileColumnNode(3))
-                     //}   
                      this.setAttribute('num-columns', this.shadowRoot.children.length)
                      this.setAttribute('num-rows', this.shadowRoot.children[0].children.length)
                   }
@@ -1426,30 +1702,47 @@
                      tmpl.innerHTML = createTileGroupMarkup(12)
                      return tmpl.content.cloneNode(true)
                   }
-                  attributeChangedCallback(attr, oldVal, newVal) { 
-                     if (attr === 'num-rows') { 
-                        if (oldVal != null) {
-                           if (oldVal > newVal) {
-                              [...this.shadowRoot.querySelectorAll('.tile-column')].forEach(col=> {
-                                 [...col.children].at(-1).remove()
-                              })
-                           } else if (newVal > oldVal) {
-                              [...this.shadowRoot.querySelectorAll('.tile-column')].forEach(col=> {
-                                 col.appendChild(this.createTileGroup())
-                              }) 
-                           }
-                        } 
+
+                  getNumRows() {
+                     return [...this.shadowRoot.querySelector('.tile-column').children].length
+                  }
+
+                  getNumCols() {
+                     return [...this.shadowRoot.querySelectorAll('.tile-column')].length
+                  }
+
+                  setRowOrCol(rowOrCol, num) {
+                     if (rowOrCol==='row') {
+                        this.setNumRows(num)
+                        this.setAttribute('num-rows', num)
                      }
-                     else if (attr === 'num-columns') {
-                        if (oldVal != null) {
-                           if (oldVal > newVal) {
-                              [...this.shadowRoot.querySelectorAll('.tile-column')].at(-1).remove()
-                           } else if (newVal > oldVal) {
-                              this.shadowRoot.appendChild(createTileColumnNode(Number(this.getAttribute('num-rows'))))
-                           }
-                        } 
+                     else if (rowOrCol==='column') {
+                        this.setNumCols(num)
+                        this.setAttribute('num-columns', num)
                      }
                   }
+
+                  setNumRows(rowNum) {
+                     const curr = this.getNumRows()
+                     if (rowNum < curr) {
+                        [...this.shadowRoot.querySelectorAll('.tile-column')].forEach(col=> {
+                           [...col.children].at(-1).remove()
+                        });
+                     } else if (rowNum > curr) {
+                        [...this.shadowRoot.querySelectorAll('.tile-column')].forEach(col=> {
+                           col.appendChild(this.createTileGroup())
+                        }) 
+                     }
+                  }
+
+                  setNumCols(colNum) {
+                     const curr = this.getNumCols()
+                     if (colNum < curr) {
+                        [...this.shadowRoot.querySelectorAll('.tile-column')].at(-1).remove()
+                     } else if (colNum > curr) {
+                        this.shadowRoot.appendChild(createTileColumnNode(this.getNumRows()))
+                     }
+                  } 
                }
 
             })())
@@ -1474,229 +1767,291 @@
                   constructor() { super();
                      this.styles = `  
 
-                        :host { 
-                           font-size: 90%; 
-                           outline: 2px dotted rgba(255,255,255,.5);
-                           display: grid; 
-                           text-align:center;
-                           position: relative;  
-                           flex:0 0 auto;
-                           overflow: hidden;
-                           margin: 0 auto;    
-                           cursor: pointer;
-                           z-index: 1; 
-                        } 
-
-                        button,
-                        input[type="file"]  {
-                           box-sizing: border-box;
-                           appearance: none;
-                           color: white;
-                           cursor: pointer;  
-                           position: relative;   
-                           display: inline-block;
-                           vertical-align: middle;
-                           padding:.3rem; 
-                           margin: 0 0;
-                           background-color: rgb(255 255 255 / .1);
-                           border-radius: .2rem;
-                           outline: 0.1rem solid rgb(0 0 0 / .1); 
-                           box-shadow: rgb(0 0 0 / .4)       -1px -1px 1px 1px inset,
-                                       rgb(255 255 255 / .1)  1px  1px 1px 1px inset; 
-                        }
-
-                        input[type="url"] { 
-                           background: rgb(255 255 255 / .2);
-                        }
-
-                        button:active, button[active], input[type="file"]:active  {
-                           box-shadow: rgb(0 0 0 / .4)         1px  1px 1px 1px inset,
-                                       rgb(255 255 255 / .1)  -1px -1px 1px 1px inset; 
-                           background-color: rgb(0 0 0 / .1);
-                        }  
-
+                        :host,
+                        input[type="url"],
                         input[type="file"] {
                            position: relative;
-                           width: 100%; 
+                           width: 100%;
                         }
 
-                        .image-submit-wrapper {
-                           display: grid;
-                           place-content: center;
-                           height: 100%;
-                           width: 100%;
-                           position: absolute; 
-                           z-index: 100; 
-                           opacity: 1;
-                           visibility: hidden;
-                           background: rgb(0 0 0 / .1);
+                        :host {            
+                           display: block;
+                           text-align: center; 
+                           flex: 0 0 auto; 
+                           border-radius: 8px;  
+                           margin: 0 auto;     
+                           
+                           cursor: pointer;
+                           z-index: 1;  
+                        }  
+  
+                        input[type="file"]{ 
+                           margin: 0 auto;
+                           box-sizing: border-box; 
+                           appearance: none; 
+                           width: 75%;
                         } 
 
-                        .image-submit-wrapper > div {
-                           padding: 1rem;
+                        .image-frame {
+                           position: absolute;
+                           height: 100%;
+                           width: 100%;
+                           border-radius: 8px; 
+                           overflow: hidden;
+                           text-align: center; 
+                        }
+                        .image-frame-center {
+                           display: grid;
+                           width: 100%;
+                           place-content: center;
+                        }
+                        img#preview-image-element {   
                            align-self: center;
-                           justify-self: center; 
+                           justify-self: center;
+                           max-height: 200px;
+                           margin: 0 auto;
+                           height: 100%; 
+                           width: auto; 
+                           position: relative;
+                           object-fit: contain;
+                           box-sizing: border-box; 
+                           content: var(--image-url);      
+                           z-index:0;
+                           pointer-events: none;
                         }
 
-                        .image-submit-wrapper > div > div:last-child {
-                           margin-top: .5rem;
+                        :host(.drag-ready:not(.selecting))  {
+                              outline: 2px dashed rgb(255 255 255 / .8);
                         }
-                    
-                        img#preview-image-element {  
-                           align-self: center;
-                           justify-self: center;  
-                           box-sizing: border-box;
-                           position: absolute;
-                           content: var(--image-url);     
-                           object-fit: contain; 
-                           height: calc(100% + 2px);
-                           min-width:100%;
-                           max-height: calc(100% + 2px); 
-                           margin-bottom: -1px;
+                        .image-upload-area { 
+                           height: 200px;
+                           max-width: 100%;
+                           position: relative;
+                           max-height: 200px;
+                           outline:  2px dashed rgb(255 255 255 / .8);
+                           visibility: hidden;
+                           display: grid;
+                             border-radius: 8px; 
+                           background: rgb(0 0 0 / .5);
+                           place-content: center;
+                        }
+
+                        :host(.drag-ready) .image-upload-area {
+                           background:  green;
+                           filter: brightness(120%);
+                        }
+
+                        :host(.selecting) .image-upload-area {
+                           visibility: visible;
+                        }
+
+                        .image-upload-area span {
+                           color: white;
                         }
  
-                        #preview-frame-graphic { 
-                           width: 100%;
-                           margin: 0 auto;
+                        .sub-text {
+                           opacity :0.8;
+                           font-size: 75%;
+                        }
+
+                        .svg-wrap {
+                           max-width: 100%;
+                           line-height: 30px;
+                        }
+
+                        .svg-wrap svg {
+                           max-width: 40px;
                            height: 100%;
-                           display: grid;
-                           place-content: center;
-                           align-self: center;
-                           justify-self: center;  
-                           position: absolute; 
-                           z-index: 100;  
-                           opacity: 0;
-                           transition: opacity 100ms ease-in-out;
-                           pointer-events: none;
-                           background: rgb(0 0 0 / .1);
+                           fill: white;
+                           display: inline-block;
+                           vertical-align: middle;
                         }
 
-                        #preview-frame-graphic > svg {  
-                           width: 50%;
-                           margin: auto;
-                           fill: currentcolor;
-                        }                 
-
-                        img#preview-image-element.drag-ready     {
-                           filter: brightness(150%)
+                        .main-text {
+                           font-weight: bold; 
+                        }
+                        :host(.url-input) .add-image-icon,
+                        :host(.url-input) .image,
+                        :host(:not(.url-input)) .url,
+                        :host(.selecting) .image-frame,
+                        input[type="url"],
+                        :host(:not(.url-input)) .link-icon
+                         {
+                           display: none;
                         } 
-
-                        :host(:hover)     #preview-image-element,
-                        :host(.selecting) #preview-image-element {
-                           filter: brightness(50%);
+                       :host(.url-input) .main-text.url,
+                       :host(.url-input) input[type="url"],
+                       :host(.url-input) .link-icon {
+                           display: initial;
                         }  
 
-                        :host(:hover) {
-                           outline: 2px dotted white;
+                        .url-wrap {
+                           display: flex;
+                           flex-flow: row nowrap;
                         }
-                        :host(:hover) #preview-frame-graphic     {
-                           transition: opacity 0ms ease-in-out;
-                           opacity: 1;
-                        }   
-                        :host(:hover) #preview-frame-graphic svg {
-                           opacity: .7;
-                        }   
-                        :host(.selecting) #preview-frame-graphic {
-                           opacity: 0!important;
-                        }  
-                        :host(.selecting) .image-submit-wrapper  {
-                           visibility: visible;
-                        }  
-                        
-                     `;
+                        .url-wrap input {
+                           flex: 1 1 auto;
+                        }
+                        .url-wrap button {
+                           flex: 0 0 2rem;
+                        }
+                        #close-button, #image-url-button {
+                           width: 32px;
+                           position: absolute;  
+                        }
+                        #close-button { 
+                           top: 1px;
+                           right: 1px;
+                        }
+                        #image-url-button {
+                           top: 1px;
+                           left: 1px;
+                        }
+                        #close-button svg,
+                        #image-url-button svg {
+                           width: 20px;                           
+                           fill: white;
+                        }
+                        #close-button svg,
+                        #image-url-button svg {
+                           position:relative;
+                           top: 2px;
+                        }
+                        .sub-text.url {
+                           font-weight:bold;
+                        }
+                        #close-button svg.icon rect:first-child {
+                           transform-origin:center center;
+                           transform: rotate(45deg);
+                        }
+                        #close-button svg.icon rect:nth-child(2) {
+                           transform-origin:center center;
+                           transform: rotate(-45deg);
+                        }
+
+                        .shadow-draw { 
+                           position: absolute;
+                           pointer-events: none;
+                           width: 100%;
+                           height: 100%; 
+                           border-radius: 8px;
+                           outline: 0.1rem solid rgb(0 0 0 / .1); 
+                           box-shadow: rgb(0 0 0 / .4)       0px 0px 1px 1px inset;      
+                        }
+                        `;
 
                      this.template =  ` 
-                        <div class="image-submit-wrapper"> 
-                           <div>
-                              <div>
-                                 <label for="file-input-element">Choose file to upload</label>
-                                 <input type="file" id="file-input-element" name="file" accept="image/*" /> 
-                              </div>  
-                              <div> OR </div> 
-                              <div >
-                                 <label for="url-input-element">Enter image URL</label>
-                                 <input type="url" id="url-input-element"/> 
-                                 <button title="Load Image Url" type="button" id="url-input-submit">Load</button>
-                              </div>  
-                              <div > 
-                                 <button title="Cancel Load New Image" type="button" id="img-load-cancel">Cancel</button>
-                              </div>  
-                           </div> 
+                        
+                        <div class="image-frame">
+                           <div class="image-frame-center">
+                              <img id="preview-image-element" class="preview-image" > 
+                           </div>
                         </div>
-
-                        <div id="preview-frame-graphic">
-                           <svg xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 120 120">
-                              <path d="M77 111H25A16 16 0 0 1 9 95V25A16 16 0 0 1 25 9h70a16 16 0 0 1 16 16v52a24 24 0 0 0-2-1.7V25a14 14 0 0 0-14-14H25a14 14 0 0 0-14 14v62l20-19 20 17 27-29 10.5 14.6A24 24 0 0 0 77.1 111Z"/>
-                              <circle cx="38" cy="36" r="13"/>
-                              <path d="M94 72.6a21.4 21.4 0 1 1 0 42.8 21.4 21.4 0 0 1 0-42.8Zm-2.5 23.9v6.5c0 .8.7 1.5 1.5 1.5h2c.8 0 1.5-.7 1.5-1.5v-6.5h6.5c.8 0 1.5-.7 1.5-1.5v-2c0-.8-.7-1.5-1.5-1.5h-6.5V85c0-.8-.7-1.5-1.5-1.5h-2c-.8 0-1.5.7-1.5 1.5v6.5H85c-.8 0-1.5.7-1.5 1.5v2c0 .8.7 1.5 1.5 1.5h6.5Z"/>
-                           </svg> 
-                        </div>  
-
-                        <img id="preview-image-element" class="preview-image" >`; 
+                        <div class="shadow-draw"></div>
+                        <div class="image-upload-area">
+                          <div id="close-button">
+                              <svg class="icon"
+                                   viewBox="0 0 30 26"
+                                   xmlns="http://www.w3.org/2000/svg"
+                                   preserveAspectRatio="xMidYMid meet"> 
+                                  <rect class="menu-piece middle" x="1" y="11" width="28" height="4" rx="2" ry="2"/>
+                                  <rect class="menu-piece bottom" x="1" y="11" width="28" height="4" rx="2" ry="2"/>
+                              </svg>
+                           </div> 
+                           <div class="image" id="image-url-button">
+                              <svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2" viewBox="0 0 109 109"><path d="M56 34s-5-3-16 0l20-20a25 25 0 0 1 35 35L80 65a25 25 0 0 1-36 0 6 6 0 0 1 8-9c6 6 14 6 20 0l15-15a14 14 0 0 0-19-19L56 34Zm-3 41s5 3 16 0L49 95a25 25 0 0 1-35-35l15-16c10-10 26-10 36 0a6 6 0 0 1-9 8c-5-5-14-5-19 0L22 68a14 14 0 0 0 19 19l12-12Z"/></svg>
+                           </div>
+                           <div class="svg-wrap">
+                              <svg class="link-icon" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2" viewBox="0 0 109 109"><path d="M56 34s-5-3-16 0l20-20a25 25 0 0 1 35 35L80 65a25 25 0 0 1-36 0 6 6 0 0 1 8-9c6 6 14 6 20 0l15-15a14 14 0 0 0-19-19L56 34Zm-3 41s5 3 16 0L49 95a25 25 0 0 1-35-35l15-16c10-10 26-10 36 0a6 6 0 0 1-9 8c-5-5-14-5-19 0L22 68a14 14 0 0 0 19 19l12-12Z"/></svg>
+                              <svg class="add-image-icon" xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 120 120">
+                                 <path d="M77 111H25A16 16 0 0 1 9 95V25A16 16 0 0 1 25 9h70a16 16 0 0 1 16 16v52a24 24 0 0 0-2-1.7V25a14 14 0 0 0-14-14H25a14 14 0 0 0-14 14v62l20-19 20 17 27-29 10.5 14.6A24 24 0 0 0 77.1 111Z"/>
+                                 <circle cx="38" cy="36" r="13"/>
+                                 <path d="M94 72.6a21.4 21.4 0 1 1 0 42.8 21.4 21.4 0 0 1 0-42.8Zm-2.5 23.9v6.5c0 .8.7 1.5 1.5 1.5h2c.8 0 1.5-.7 1.5-1.5v-6.5h6.5c.8 0 1.5-.7 1.5-1.5v-2c0-.8-.7-1.5-1.5-1.5h-6.5V85c0-.8-.7-1.5-1.5-1.5h-2c-.8 0-1.5.7-1.5 1.5v6.5H85c-.8 0-1.5.7-1.5 1.5v2c0 .8.7 1.5 1.5 1.5h6.5Z"/>
+                              </svg> 
+                           </div>
+                           <span class="image main-text">Drop images here</span>
+                           <span class="url main-text">Load Remote Image</span>
+                           <span class="sub-text">Files supported: JPG, PNG, GIF, SVG</span>
+                           <span class="image">OR</span> 
+                           <span class="sub-text url">Enter image url below</span> 
+                           <input class="image" title=" " type="file" id="file-input-element" name="file" accept="image/*" /> 
+                           <div class="url url-wrap">
+                              <input type="url" id="url-input-element"/>
+                              <button title="Load Image Url" type="button" id="url-input-submit">Load</button>
+                           </div>
+                        </div>`; 
                   }
 
-                  get selecting() { 
-                     return this.classList.contains('selecting') 
-                  }
+             
 
-                  set selecting(val) {   
-                     if (val == false) {
-                        this.classList.remove('selecting') 
-                     } else if (val==true) { 
-                        this.classList.add('selecting') 
-                     }  
-                  } 
-
-                  connectedCallback() {
-
-                     this.selecting = false;
-       
-                     this.fileInputEl = this.shadowRoot.querySelector('#file-input-element')
-                     this.prevImgEl   = this.shadowRoot.querySelector('#preview-image-element')
-                     this.urlInputEl  = this.shadowRoot.querySelector('#url-input-element')
-                     this.checkbox    = this.shadowRoot.querySelector('input[type="checkbox"]')
-
-                     this.addEventListener('click', e=> { 
-                        e.stopPropagation()
-                        if (this.selecting === false) { this.selecting = true }
-                     })
-
-                     this.fileInputEl.addEventListener('change', async e => { 
-                        const file = this.fileInputEl.files[0]
-                        if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(1))) { 
-                           let url=URL.createObjectURL(file)
-                           this.selecting = false; 
-                           setCssProp('--image-url', 'url('+url+')');  
-                        }
-                     })                     
-
-                     this.urlInputEl.addEventListener('click', async e=> { 
-
-                        const currVal = this.urlInputEl.value,
-                              extens  = currVal.split('.').at(-1)
-
-                        if (currVal.startsWith('http') && extens && IMG_FILE_EXTENSIONS.includes(extens)) { 
+                  async submitUrl(url) {
+                     //console.log(url)
+                     const  extens  = url.split('.').at(-1) 
+                        if (url.startsWith('http') && extens && IMG_FILE_EXTENSIONS.includes(extens)) { 
                            try {
-                              const urlValid = await ifUrlExist(currVal)
+                              const urlValid = await ifUrlExist(url)
                               if (urlValid) {
                                  this.selecting = false; 
-                                 setCssProp('--image-url', 'url('+this.urlInputEl.value+')')  
+                                 setCssProp('--image-url', 'url('+url+')')  
                               }
                            }
                            catch(error) {
                               console.log('error caught')
                            } 
                         } 
+                  }
+
+                  connectedCallback() {
+ 
+                     this.fileInputEl = this.shadowRoot.querySelector('#file-input-element') 
+                      this.urlInputEl  = this.shadowRoot.querySelector('#url-input-element') 
+  
+                     this.shadowRoot.querySelector('.image-frame').addEventListener('click',e=> {
+                        this.classList.remove('url-input')
+                        this.classList.add('selecting')
+                     })
+                     this.shadowRoot.querySelector('#close-button').addEventListener('click', e=> { 
+                        e.stopPropagation()
+                        this.classList.remove('selecting')  
+                     })
+
+                     this.fileInputEl.addEventListener('change', async e => { 
+                        const file = this.fileInputEl.files[0]
+                        if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(1))) { 
+                           let url=URL.createObjectURL(file)
+                           this.classList.remove('selecting')
+                           setCssProp('--image-url', 'url('+url+')');  
+                        }
+                     })                     
+
+                     this.shadowRoot.querySelector('#image-url-button').addEventListener('click',e=> {
+                        if ( !this.classList.contains('url-input')) {
+                           this.classList.add('selecting')
+
+                           this.classList.add('url-input')
+                        } else if (this.classList.contains('url-input')) {
+                           this.classList.remove('selecting')
+                           this.classList.remove('url-input');
+                           this.classList.remove('drag-ready')
+                        }
+                     })
+
+                     this.shadowRoot.querySelector('#url-input-submit').addEventListener('click',  e=> {  
+                       this.submitUrl(this.urlInputEl.value);
                      }) 
-       
-                     this.addEventListener('dragover', e=> e.preventDefault())
+                     
+                     
+                     this.addEventListener('dragover', e=> { 
+                        e.preventDefault()
+                     })
 
                      this.addEventListener('dragenter', e=> {
-                         e.preventDefault()
-                        this.prevImgEl.classList.add('drag-ready') 
-                        setTimeout(()=> {
-                          this.prevImgEl.classList.remove('drag-ready') 
-                        }, 300)
+                         e.preventDefault() 
+                        this.classList.add('drag-ready')  
+                     }) 
+                      this.addEventListener('dragleave', e=> {
+                         e.preventDefault() 
+                        this.classList.remove('drag-ready')  
                      }) 
 
                      this.addEventListener('drop', e=> {   
@@ -1707,18 +2062,11 @@
                               const file = await blob.getAsFile()                                
                               if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))) { 
                                  setCssProp('--image-url', 'url('+URL.createObjectURL(file)+')') 
+                                 this.classList.remove('selecting')                                 
                               }
+                              this.classList.remove('drag-ready')
                            })  
-                     }) 
-
-                     this.shadowRoot.querySelector('#img-load-cancel').addEventListener('click', e=> { 
-                        e.stopPropagation()
-                        this.selecting = false
-                     }) 
-
-                     if (this.hasAttribute('start-open')){
-                        this.selecting = true; 
-                     } 
+                     })  
                   }
                } 
             })())
@@ -1733,8 +2081,7 @@
          ;(function(){
 
             const SNAP_TOLERANCE = 80,
-                  origWidth      = 300,
-                  raf            = requestAnimationFrame,
+                  origWidth      = 300, 
                   MINMAINWIDTH   = 210, 
                   dashEl         = document.getElementById('dash'), 
                   innerDashEl    = document.getElementById('inner-dash'), 
@@ -1743,21 +2090,20 @@
                   TIME_INTERVALS = [
                      4000, 7000, 10000, 15000, 25000
                   ],
+                  hypno = document.querySelector('hypno-tiler'),
+                  upl = document.querySelector('image-uploader'),
                   ANIM_SELECT_PROBABILITIES = [
                      'x','x','x','x','x','x','x',
                      'y','y','y','y','y','y','y',
                      'r','r','r','r'
                   ];
 
-            let dashMin,
-                canZoom = true,
+            let dashMin, 
                 pollingRate = 15,
                 intervalId,
-                autoModeInterval,
-                initialZoom = 100,
+                autoModeInterval, 
                 activeAnimations = [],
-                aniPause = false,
-                imgScaleTimeout  = 0;
+                aniPause = false;
 
             function startDashMove(event) {
               
@@ -1786,8 +2132,8 @@
                      }
                      else { 
                         if      (dx > mainmin)       { setDashWidth(mainmin) }
-                        else if (dx < dashMin - tol) { raf(()=> toggleDash('close')) }
-                        else if (dx < dashMin + tol) { raf(()=> toggleDash('open')) } 
+                        else if (dx < dashMin - tol) { requestAnimationFrame(()=> toggleDash('close')) }
+                        else if (dx < dashMin + tol) { requestAnimationFrame(()=> toggleDash('open')) } 
                      }   
                   }
                });  
@@ -1877,6 +2223,7 @@
                dashEl.style.width = amt + 'px'
             } 
 
+            const anVal = document.getElementById('animate-value-display');
             function toggleAnimationProp(property) { 
                if (property==='rotate') {
                   property = 'r'
@@ -1889,9 +2236,10 @@
                   activeAnimations = activeAnimations.filter(itm => itm!==property) 
                   if (activeAnimations.length === 0) { stopAnimation()  }
                }  
+
             }
 
-            const zoomSlider = document.getElementById('zoom-input-slider');
+            //const zoomSlider = document.getElementById('zoom-input-slider');
     
             function startAnimation(param) {   
                if (intervalId == null) {  
@@ -1917,12 +2265,10 @@
                } 
             }
 
-
             function stopAnimation(param) { 
                clearInterval(intervalId);
                intervalId = null; 
             } 
-
             
             const enableAutoMode = (()=> {
                
@@ -1977,7 +2323,7 @@
                document.querySelector('.animate-properties-group').classList.remove('automode-enabled');
                ['animate-x-toggle','animate-y-toggle','animate-rotate-toggle'].forEach(id=>{
                   const el = document.getElementById(id)
-                  if (el.querySelector('input').checked){
+                  if (el.hasAttribute('checked')) {
                      checkedAnims.push(((id.split('-')[1])[0]))
                   }
                   el.removeAttribute('disabled')
@@ -2009,16 +2355,62 @@
                startImageMove(e)
             })    
 
+            document.getElementById('main').addEventListener('dragenter', e=> {
+               e.preventDefault()
+            }) 
+            document.getElementById('main').addEventListener('dragover', e=> e.preventDefault())
+            document.getElementById('main').addEventListener('drop', e=> {   
+               e.preventDefault();    
+               [...e.dataTransfer.items] 
+                  .filter( x => x.kind === 'file')
+                  .forEach( async blob => {   
+                     const file = await blob.getAsFile()                                
+                     if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))) { 
+                        setCssProp('--image-url', 'url('+URL.createObjectURL(file)+')') 
+                        upl.classList.remove('selecting')
+                        upl.classList.remove('url-input')
+                     }
+                  })  
+            }) 
+
+            const reflectVal = document.getElementById('reflect-value-display');
+            const updateReflect = ()=>{
+               for(let inp of [...document.querySelectorAll('#mirror-radio-select input')]){
+                  if (inp.checked){
+                     reflectVal.innerHTML =inp.value;
+                     break;
+                  }
+               }
+            }
+
+            
+            
+            
             document.getElementById('mirror-radio-select').addEventListener('click', e=> {
                let val = Number(e.originalTarget?.value ?? e.target.value)
                if ([4,6,8,12].includes(val)) {
                   document.querySelector('hypno-tiler').setAttribute('reflect', val)    
                } 
+               updateReflect()
             });
+            updateReflect()
+            
+
+            document.querySelectorAll('div.image-control-group .display-section').forEach(group=>{
+               group.addEventListener('click',function(e){
+                  [...this.parentNode.parentNode.children].forEach(child=> {
+                     if (child!==this.parentNode) {
+                        child.removeAttribute('active')
+                     } else {
+                        toggleAttr(child, 'active')
+                     }
+                  })
+               })
+            })
     
             document.getElementById('canvas-tools-toolbar').addEventListener('click', e=> {
                const properTarget = (e.originalTarget ?? e.target)
-               const tName = properTarget.getAttribute('tool-name')
+               const tName = properTarget.getAttribute('tool-name').toLowerCase()
                if (tName){
                   properTarget.setAttribute('active','');
 
@@ -2049,57 +2441,114 @@
                }
                bouncedResizeTimer();
             })
+
+            function updateAnimDisplay() {
+               let val = [];
+               for (let checkbox of [...document.querySelectorAll('fancy-checkbox')]) {
+                  const id = checkbox.id.split('-').at(1)
+                  if (checkbox.hasAttribute('checked')) {
+                     val.push(id[0].toUpperCase() + id.substring(1,id.length));
+                  }
+               }
+               if (val.includes('Auto')) 
+                  val = ['Auto']              
+               if (val.length===0) 
+                  val.push('None')              
+               anVal.innerHTML = val.join(', '); 
+            }
     
             ;['x','y','rotate'].forEach(toggle=> {
                document.getElementById('animate-'+toggle+'-toggle')
-                       .addEventListener('toggle-check', e=> toggleAnimationProp(toggle)) 
+                       .addEventListener('toggle-check', e=> { 
+                        toggleAnimationProp(toggle)
+                        updateAnimDisplay()
+                  }) 
             })  
              
             document.getElementById('animate-auto-toggle').addEventListener(
-               'toggle-check', e=> e.detail.toggle ? enableAutoMode() : disableAutoMode()
+               'toggle-check', e=> {
+                  if (e.detail.toggle)
+                     enableAutoMode()
+                  else
+                     disableAutoMode()
+                  updateAnimDisplay();
+               }
             );
            
-            const hypno = document.querySelector('hypno-tiler')
+            
             
             const rowColIncr = (rowOrCol, e)=> { 
+               console.log(e.detail.value);
                const currVal = Number(hypno.getAttribute(`num-${rowOrCol}s`)),
                      incr    = (e.detail.value === 'plus' ? 1 : -1),
                      newVal  = Math.max(1, Math.min(20, currVal + incr)); 
                document.getElementById(`${rowOrCol}s-display`).innerHTML = newVal;
-               hypno.setAttribute(`num-${rowOrCol}s`, newVal)
+               hypno.setRowOrCol(rowOrCol, newVal);
+               //hypno.setAttribute(`num-${rowOrCol}s`, newVal)
             }
                         
             document.getElementById('rows-incrementer').addEventListener('increment', e=> rowColIncr('row', e))
 
             document.getElementById('columns-incrementer').addEventListener('increment',e=> rowColIncr('column', e))
-       
-            document.getElementById('image-scale-input-slider').addEventListener('range-change', e=> {
 
-               if (e.detail.from === 'input' ) {
-                  if (intervalId != null) {
-                     stopAnimation()
-                     document.body.classList.add('no-transitions') 
-                     aniPause = true;
-                  }  
-                  clearTimeout(imgScaleTimeout);
-                  imgScaleTimeout = setTimeout(()=> {
-                     document.body.classList.remove('no-transitions') 
-                     if (aniPause == true) { startAnimation() }
-                  }, 500); 
+            
+            document.getElementById('edit-image-button').addEventListener('click', e=> { 
+               if (upl.classList.contains('url-input') && upl.classList.contains('selecting')){
+                  upl.classList.remove('url-input')
                }
-               
-               setCssProp('--image-scale', e.detail.value + '%')  
+               else if (upl.classList.contains('selecting')) {
+                  upl.classList.remove('selecting')
+               } else {
+                  upl.classList.remove('url-input')
+                  upl.classList.add('selecting')
+               }  
             })
             
-            document.getElementById('zoom-input-slider').addEventListener('range-change', e=> {
-               setCssProp('--zoom-amount', e.detail.value + '%')
-               initialZoom = e.detail.value;
-            })
 
-            document.getElementById('rotate-input-slider').addEventListener('range-change', e=> {
-               setCssProp('--canvas-rotation', e.detail.value + 'deg')
-            })
+            function pauseAnimation() {
+               if (intervalId!=null){
+                  stopAnimation()
+                  document.body.classList.add('no-transitions')
+                  aniPause = true
+               }
+            }
 
+            function restartAnimation(){
+               document.body.classList.remove('no-transitions')
+               if (aniPause == true) { startAnimation() }
+            }
+
+
+            const valDisplays = ((dict = {})=>{
+               ['image-scale','zoom-amount','tile-width','canvas-rotation'].forEach(control=>{
+                  dict[control] = document.getElementById(control+'-value-display')
+               })
+               return dict;
+            })();
+         
+            [ 'image-scale-input-slider',
+              'tile-width-input-slider',
+              'zoom-amount-input-slider',
+              'canvas-rotation-input-slider'].forEach(sliderId=>{
+               const slider = document.getElementById(sliderId),
+                     cssProp = sliderId.replace('-input-slider','');
+               slider.addEventListener('range-change', ((timeoutId)=>
+                  (e) => { 
+                     if (e.detail.from === 'input' ) {
+                        if (intervalId != null) pauseAnimation()
+                        clearTimeout(timeoutId);
+                        timeoutId = setTimeout(restartAnimation, 500); 
+                     }    
+                     const newVal = (e.detail.value + (slider.getAttribute('unit')));
+                     setCssProp('--'+cssProp, newVal);  
+                     valDisplays[cssProp].innerHTML = (cssProp.includes('rot') ? newVal.replace('deg','°') : newVal);
+                  })())
+               if (slider.hasAttribute('value')){
+                  const newVal = (slider.getAttribute('value') + (slider.getAttribute('unit')));
+                  valDisplays[cssProp].innerHTML = (cssProp.includes('rot') ? newVal.replace('deg','°') : newVal);
+               }
+            })
+ 
             setTimeout(()=>{
                for (let rowCol of ['rows','columns']) {
                   document.getElementById(rowCol+'-display').innerHTML = hypno.getAttribute('num-'+rowCol)
@@ -2107,13 +2556,16 @@
             },100);
 
             setDashMin(origWidth)
-            toggleDash('close') 
-            //toggleAnimationProp('x')
-            enableAutoMode()
-            //startAnimation();
+            toggleDash('close')  
+            enableAutoMode() 
+            updateAnimDisplay()
             activateTool('move')
-           
-
+            
+            /* if an image url is detected in url hash, try and load it */
+            if (window.location.hash.replace('#','').startsWith('http') &&
+               IMG_FILE_EXTENSIONS.includes(window.location.hash.split('.').at(-1))) { 
+               document.querySelector('image-uploader').submitUrl(window.location.hash.replace('#',''))
+            }
          })() 
 
       })()
