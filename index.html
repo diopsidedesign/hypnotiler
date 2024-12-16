@@ -2252,8 +2252,9 @@
                            pos   = { x, y, r: Number(readCssProp('--image-rotation').replace(/[^\-0-9]/g,''))}; 
                      ['x','y','r'].forEach(prop => {
                         if (activeAnimations.includes(prop)) {
-                           if (incr[prop] === 0 || pos[prop] <= -animLim[prop])  { incr[prop]=1 }
-                           if (pos[prop] >= animLim[prop]) { incr[prop] = -1 }
+                           let incrBase = prop === 'r' ? 0.8 : 1;
+                           if (incr[prop] === 0 || pos[prop] <= -animLim[prop])  { incr[prop]=incrBase }
+                           if (pos[prop] >= animLim[prop]) { incr[prop] = incrBase*(-1) }
                         }
                         else { incr[prop]= 0; }
                      });
@@ -2261,7 +2262,7 @@
                         setCssProp('--image-position', (x + incr.x)+'px '+(y + incr.y)+'px')     
                      }               
                      if (incr.r !== 0) {
-                        setCssProp('--image-rotation', 'rotate('+(pos.r + incr.r) + 'deg)') 
+                        setCssProp('--image-rotation', 'rotate('+(Math.round((pos.r + incr.r)*10)/10) + 'deg)') 
                      } 
                      intervalId = setTimeout(()=> changeFunc(), pollingRate);   
                   }  
