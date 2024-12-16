@@ -967,6 +967,7 @@
          
          const IMG_FILE_EXTENSIONS = ['jpg','jpeg','png','gif','svg','heic','webp'],
                hypnoTilerApp = document.querySelector('hypno-tiler'),
+               upl = document.querySelector('image-uploader'),
                outermostAppWrap = document.getElementById('outermost-app-wrap');
 
          const elTargets = {
@@ -1166,6 +1167,25 @@
             }
 
          })()
+
+         /////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+         function setImageUrl(url) {
+            let currUrl = readCssProp('--image-url')
+            if (!(typeof url==='string')){
+               url=URL.createObjectURL(url)
+            }
+            if (!url.startsWith('url(')){
+               url = 'url('+url+')'; 
+            }
+            setCssProp('--image-url', url); 
+            if (currUrl.startsWith('url(')) {
+               URL.revokeObjectURL(currUrl)
+            }
+            upl.classList.remove('selecting')
+            upl.classList.remove('url-input')
+         }
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
          // saves some boilerplate for creating shadow DOM based custom elements
@@ -2035,8 +2055,7 @@
                            try {
                               const urlValid = await ifUrlExist(url)
                               if (urlValid) {
-                                 this.selecting = false; 
-                                 setCssProp('--image-url', 'url('+url+')')  
+                                 setImageUrl(url) 
                               }
                            }
                            catch(error) {
@@ -2062,9 +2081,7 @@
                      this.fileInputEl.addEventListener('change', async e => { 
                         const file = this.fileInputEl.files[0]
                         if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(1))) { 
-                           let url=URL.createObjectURL(file)
-                           this.classList.remove('selecting')
-                           setCssProp('--image-url', 'url('+url+')');  
+                           setImageUrl(file); 
                         }
                      })                     
 
@@ -2105,8 +2122,7 @@
                            .forEach( async blob => {   
                               const file = await blob.getAsFile()                                
                               if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))) { 
-                                 setCssProp('--image-url', 'url('+URL.createObjectURL(file)+')') 
-                                 this.classList.remove('selecting')                                 
+                                 setImageUrl(file)                     
                               }
                               this.classList.remove('drag-ready')
                            })  
@@ -2136,7 +2152,6 @@
                      4000, 7000, 10000, 15000, 25000
                   ],
                   hypno = hypnoTilerApp,
-                  upl = document.querySelector('image-uploader'),
                   ANIM_SELECT_PROBABILITIES = [
                      'x','x','x','x','x','x','x',
                      'y','y','y','y','y','y','y',
@@ -2424,12 +2439,7 @@
                   .forEach( async blob => {   
                      const file = await blob.getAsFile()                                
                      if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))) { 
-                        const newurl = 'url('+URL.createObjectURL(file)+')'
-                        setCssProp('--image-url', newurl) 
-
-                        sessionStorage.setItem('imageUrl', newurl)  
-                        upl.classList.remove('selecting')
-                        upl.classList.remove('url-input')
+                        setImageUrl(file) 
                      }
                   })  
             }) 
