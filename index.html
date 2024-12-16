@@ -1232,7 +1232,7 @@
                super();
 
                this.styles = ` 
-                  :host {
+                 :host {
                      position: relative; 
                      display: inline-block;
                   }
@@ -1241,7 +1241,11 @@
                      border: none;
                      outline: none;
                      ${btnAndInputStyles.base}
-                     padding:none;
+                     padding: none;
+
+                     display: inline-grid;
+                     place-content: center;
+
                   }
                   button:hover {
                      ${btnAndInputStyles.hover}
@@ -1267,12 +1271,15 @@
                   }
 
                   button >  svg {
+                     align-self: center;
+                     justify-self: center;
+                     display: inline-block;
+                     margin: 0 0 0 0;
                      fill: currentcolor;
                      width: 100%;
-                     position: relative;
-                     top: 1px;
+                     position: relative; 
+                     min-width: 12px;
                      transform: none;
-                     min-width: 16px;
                   }
 
                   button:active > svg { 
