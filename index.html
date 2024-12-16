@@ -2174,9 +2174,7 @@
              
             function startImageMove(event) {
 
-               let shouldRestart = false;
-
-               document.body.classList.add('no-transitions'); 
+               let shouldRestart = false; 
 
                const activeTool = document.body.getAttribute('active-tool')
                const origClick   = [ Math.round(event.x), Math.round(event.y) ];
@@ -2217,8 +2215,7 @@
                      } 
                   },
                   track: changeFunc, 
-                  release: () => {       
-                     document.body.classList.remove('no-transitions') 
+                  release: () => {        
                      if (shouldRestart == true) {
                         startAnimation()
                      }
