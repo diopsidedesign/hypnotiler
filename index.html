@@ -1540,6 +1540,15 @@
                            z-index:1;
                         }  
 
+                        .tri, .tri:before, .tile-group, .tile-column {
+                           -webkit-backface-visibility: hidden;
+                           -webkit-transform: translate3d(0,0,0);
+                           -webkit-transform: translateZ(0); 
+                           transform: translate3d(0,0,0);
+                           /*transform: translateZ(0);*/
+                           backface-visibility: hidden; 
+                        }
+
                         .tri:before {
                            z-index:-1;
                            content: "";
