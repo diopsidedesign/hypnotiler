@@ -85,9 +85,9 @@
 
       #dash {    
          color: white;
-         background-color: rgba( 0,0,0, .5);
-          -webkit-backdrop-filter: blur(2rem);
-         backdrop-filter: blur(2rem);  
+         background-color: rgba(80,80,80, .92);
+         /* -webkit-backdrop-filter: blur(2rem);/*
+        /* backdrop-filter: blur(2rem);  */
 
          -webkit-backface-visibility: hidden;
          -webkit-perspective: 1000;
@@ -190,6 +190,9 @@
          outline: none;
          appearance: none; 
       } 
+      #menu-button.hidden {
+         opacity: 0;
+      }
 
       body[dash-open] #menu-button {        
          transition: transform 500ms ease-in-out,
@@ -1232,7 +1235,7 @@
                super();
 
                this.styles = ` 
-                 :host {
+                  :host {
                      position: relative; 
                      display: inline-block;
                   }
@@ -1458,8 +1461,7 @@
                      left: var(--size-fraction);
                      top:  var(--size-fraction);  
                      height: calc(var(--button-size) - (var(--size-fraction) * 3));
-                     width:  calc(var(--button-size) - (var(--size-fraction) * 3));
-                     transition: 50ms transform linear; 
+                     width:  calc(var(--button-size) - (var(--size-fraction) * 3)); 
                      color: white;
                      transition: transform 60ms linear;
                      fill: currentcolor;
@@ -1843,8 +1845,8 @@
                         }
                         .image-frame-center {
                            display: grid;
-                           width: 100%;
                            position: relative;
+                           width: 100%;
                            place-content: center;
                         }
                         img#preview-image-element {   
@@ -2125,6 +2127,7 @@
             const SNAP_TOLERANCE = 80,
                   origWidth      = 300, 
                   MINMAINWIDTH   = 210, 
+                  menuBtn = document.getElementById('menu-button'),
                   dashEl         = document.getElementById('dash'), 
                   innerDashEl    = document.getElementById('inner-dash'), 
                   animLim        = { r: 3100, x: 3400, y: 2870, z: 100 },
@@ -2239,6 +2242,7 @@
                if (state == 'open') {
                   setDashWidth(dashMin)
                   setInnerDashTranslate(0)
+                  menuBtn.classList.remove('hidden')
                } else {
                   setDashWidth(0)
                   setInnerDashTranslate(dashMin * -1)
@@ -2382,10 +2386,24 @@
                   document.body.setAttribute('active-tool', tool) 
                }
             }
-     
-            document.getElementById('menu-button').addEventListener('click', e=> {
-               toggleDash(getDashWidth() > 0 ? 'close' : 'open')
+            
+            let eStart = 0;
+            let eEnd = 0;
+            
+            menuBtn.addEventListener('pointerdown', e=> {
+               eStart = new Date()
             }) 
+            menuBtn.addEventListener('pointerup', e=> {
+               eEnd = new Date();
+               const delta = (eEnd - eStart) / 1000.0; 
+               if (delta > 2) {
+                  e.preventDefault()
+                  menuBtn.classList.add('hidden')
+               }          
+               else {
+                   toggleDash(getDashWidth() > 0 ? 'close' : 'open')
+               }     
+            })  
 
             document.getElementById('dash-handle').addEventListener('pointerdown', e=> {
                if (e.target.tagName === 'DIV') { startDashMove(e) }
