@@ -32,6 +32,7 @@
          font-family: sans-serif;
          margin: 0;
          padding: 0;
+         -webkit-tap-highlight-color: rgba(0 0 0 / 0);
       } 
          
       body {   
@@ -73,6 +74,8 @@
          z-index: 10;  
          margin-left: 1rem; 
          flex: 1 1 auto;   
+         -webkit-user-select: none;
+         user-select: none;
       } 
 
       #main > .inner-wrapper {  
@@ -163,15 +166,21 @@
          border-radius: 16%; 
          z-index: 33;
          cursor: pointer;   
+         -webkit-user-select: none;
+         user-select: none;
          fill: white;
          stroke: white;
-         background-color: rgba(0, 0, 0, .5);
+         background-color: rgba(80, 80, 80, 1);
          transition: transform 500ms ease-in-out, 
                      filter 100ms linear 440ms,
                      opacity 500ms ease-in-out,
                      background-color 220ms ease-in-out;
          transform: translate(0, 0); 
       } 
+
+       
+ 
+         
  
       #menu-button button[menu] { 
          height: 100%;   
@@ -187,6 +196,8 @@
          overflow: visible; 
          box-sizing: content-box;
          border: none;
+         -webkit-user-select: none;
+         user-select: none;
          outline: none;
          appearance: none; 
       } 
@@ -213,7 +224,7 @@
          stroke-opacity: 1;  
          stroke: white!important;
          transform: scale(1,1) rotate(0deg);
-         transition: transform 500ms linear;  
+         transition: transform 500ms ease-in-out;  
          transform-origin: center center 0;
       }
 
@@ -1309,6 +1320,10 @@
                      transform: translate(1px, 1px);
                   }
 
+                  button.reset-button {
+                     margin-left: .3rem;
+                  }
+
                   button >  svg > path {
                      fill: inherit;
                   }
@@ -1328,7 +1343,7 @@
                             <path d="M50,27L14,27C12,27 11,28 11,30L11,34C11,36 12,37 14,37L50,37C52,37 53,36 53,34L53,30C53,28 52,27 50,27Z"/>
                         </svg>  
                      </button>${this.hasAttribute('show-reset') ? ` 
-                     <button style="margin-left: .2rem" class="reset-button"  type="button">
+                     <button  class="reset-button"  type="button">
                            <svg class="reset-button" viewBox="0 0 32 32">
                               <path d="M9.2 14c1-4 4-7 8.3-7a9 9 0 0 1 0 18c-2.4 0-4.4-1-6-2.5l-3 3.5a14 14 0 0 0 9 3.5 13.5 13.5 0 0 0 0-27A13 13 0 0 0 4.6 14H0l7 8 7-8H9.2Z"/>
                            </svg> 
@@ -1375,6 +1390,7 @@
                      width: 100%;
                   }
                   value-incrementer {
+                     margin-left: .64rem;
                      flex: 0 0 5.5rem;
                   }
                `;
@@ -1599,7 +1615,7 @@
                         }  
 
                         .tri:before {
-
+                           will-change: transform, background-position;
                            z-index:-1;
                            content: "";
                            position: absolute;  
@@ -2220,7 +2236,7 @@
                   }
                }
                else if (activeTool === 'twist') { 
-                  startingPos = Number(readCssProp('--image-rotation').replace(/[^0-9]/g,'')) 
+                  startingPos = Number(readCssProp('--image-rotation').replace(/[^0-9\.\-]/g,'')) 
                   changeFunc = (e)=> {
                      setCssProp('--image-rotation', 'rotate('+(startingPos + Math.round(e.y - origClick[1])) + 'deg)')
                   }
@@ -2318,9 +2334,10 @@
                      if (incr.r !== 0) {
                         setCssProp('--image-rotation', 'rotate('+(Math.round((pos.r + incr.r)*10)/10) + 'deg)') 
                      } 
-                     intervalId = setTimeout(()=> changeFunc(), pollingRate);   
+                     //intervalId = setTimeout(()=> changeFunc(), pollingRate);   
                   }  
-                  intervalId = setTimeout(()=> changeFunc(), pollingRate);  
+                  //setTimeout(()=> changeFunc(), pollingRate);  
+                  intervalId = setInterval(changeFunc, pollingRate)
                } 
             }
 
