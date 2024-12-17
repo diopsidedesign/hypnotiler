@@ -1599,7 +1599,7 @@
                            transform: rotateZ(0);   
                            width: var(--tile-width) ;
                         }  
-                        .tri, .tri:before, .tile-group, .tile-column {
+                        .tri, .tri::before, .tile-group, .tile-column {
                            -webkit-backface-visibility: hidden;
                            -webkit-transform: translate3d(0,0,0);
                            -webkit-transform: translateZ(0); 
@@ -1614,7 +1614,7 @@
                            z-index:1;
                         }  
 
-                        .tri:before {
+                        .tri::before {
                           
                            z-index:-1;
                            content: "";
