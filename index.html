@@ -2334,10 +2334,10 @@
                      if (incr.r !== 0) {
                         setCssProp('--image-rotation', 'rotate('+(Math.round((pos.r + incr.r)*10)/10) + 'deg)') 
                      } 
-                     //intervalId = setTimeout(()=> changeFunc(), pollingRate);   
+                     intervalId = setTimeout(changeFunc, pollingRate);   
                   }  
-                  //setTimeout(()=> changeFunc(), pollingRate);  
-                  intervalId = setInterval(changeFunc, pollingRate)
+                  intervalId = setTimeout(changeFunc, pollingRate);  
+                  //intervalId = setInterval(changeFunc, pollingRate)
                } 
             }
 
