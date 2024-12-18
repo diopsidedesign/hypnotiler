@@ -88,17 +88,8 @@
 
       #dash {    
          color: white;
-         background-color: rgba(80,80,80, 1);
-         /* -webkit-backdrop-filter: blur(2rem);/*
-        /* backdrop-filter: blur(2rem);  */
-
-         -webkit-backface-visibility: hidden;
-         -webkit-perspective: 1000;
-         -webkit-transform: translate3d(0,0,0);
-         -webkit-transform: translateZ(0); 
-         perspective: 1000;
-         transform: translate3d(0,0,0);
-         transform: translateZ(0); 
+         background-color: rgba(80,80,80, 1);  
+         -webkit-backface-visibility: hidden; 
          backface-visibility: hidden; 
          -webkit-user-select: none;
          user-select: none;
@@ -801,26 +792,22 @@
                   <div id="animate-control-group" class="image-control-group">
                      <div class="display-section">
                         <div>
-                           <span>Animate</span>
+                           <span>Animate</span> 
                            <span id="animate-value-display"></span>
                         </div>
                      </div>
                      <div class="animate-properties-group control-section">
                         <div class="auto-toggle">
-                           <fancy-checkbox checked id="animate-auto-toggle"></fancy-checkbox>  
-                           <span>Auto</span>
+                           <fancy-checkbox label="Auto" checked id="animate-auto-toggle"></fancy-checkbox>  
                         </div>
                         <div>
-                           <fancy-checkbox id="animate-x-toggle"></fancy-checkbox>
-                           <span>X</span>
+                           <fancy-checkbox label="X" id="animate-x-toggle"></fancy-checkbox>
                         </div> 
                         <div>
-                           <fancy-checkbox id="animate-y-toggle"></fancy-checkbox>
-                           <span>Y</span>
+                           <fancy-checkbox label="Y" id="animate-y-toggle"></fancy-checkbox>
                         </div> 
                         <div>
-                           <fancy-checkbox id="animate-rotate-toggle"></fancy-checkbox>  
-                           <span>Rotate</span>
+                           <fancy-checkbox label="Rotate" id="animate-rotate-toggle"></fancy-checkbox>  
                         </div> 
                      </div>
                   </div>
@@ -967,19 +954,19 @@
                         rgb(255 255 255 / .1)  1px  1px 1px 1px inset;`,
  
             active: `box-shadow: rgb(0 0 0 / .4)         1px  1px 1px 1px inset,
-                     rgb(255 255 255 / .1)  -1px -1px 1px 1px inset; 
+                                 rgb(255 255 255 / .1)  -1px -1px 1px 1px inset; 
                      background-color: rgb(0 0 0 / .1);`,
             hover : `background-color: rgb(255 255 255 / .2);
-         outline: 0.1rem solid rgb(0 0 0 / .2); 
-         box-shadow: rgb(0 0 0 / .3)       -1px -1px 1px 1px inset,
-                     rgb(255 255 255 / .2)  1px  1px 1px 1px inset; `
+                     outline: 0.1rem solid rgb(0 0 0 / .2); 
+                     box-shadow: rgb(0 0 0 / .3)       -1px -1px 1px 1px inset,
+                                 rgb(255 255 255 / .2)  1px  1px 1px 1px inset; `
          }
      
          
          const IMG_FILE_EXTENSIONS = ['jpg','jpeg','png','gif','svg','heic','webp'],
-               hypnoTilerApp = document.querySelector('hypno-tiler'),
-               upl = document.querySelector('image-uploader'),
-               outermostAppWrap = document.getElementById('outermost-app-wrap');
+               hypnoTilerApp       = document.querySelector('hypno-tiler'),
+               upl                 = document.querySelector('image-uploader'),
+               outermostAppWrap    = document.getElementById('outermost-app-wrap');
 
          const elTargets = {
             '--image-position':  hypnoTilerApp,
@@ -1080,10 +1067,44 @@
          } 
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
-         // for more elegant click + hold/move mouse behaviors
+         //  
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-         //let onePointerIsDown = false;
+         function processImageDrop(event) {
+            [...event.dataTransfer.items] 
+               .filter( x => x.kind === 'file')
+               .forEach( async blob => {   
+                  const file = await blob.getAsFile()                                
+                  if (isValidImageFile(file)) { 
+                     setImageUrl(file) 
+                  }
+               })  
+         }
+
+         function isValidImageFile(file) {
+            return ((file!=null) && IMG_FILE_EXTENSIONS.includes(file.name?.split('.').at(-1)))
+         }
+
+         function setImageUrl(url) {
+            let currUrl = readCssProp('--image-url')
+            if (!(typeof url==='string')){
+               url=URL.createObjectURL(url)
+            }
+            if (!url.startsWith('url(')){
+               url = 'url('+url+')'; 
+            }
+            setCssProp('--image-url', url); 
+            if (currUrl.startsWith('url(')) {
+               URL.revokeObjectURL(currUrl)
+            }
+            upl.classList.remove('selecting')
+            upl.classList.remove('url-input')
+         }
+
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+         // for more elegant click + hold/move mouse behaviors
+         ////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
 
          const trackPointer = (function(){
 
@@ -1160,43 +1181,23 @@
                   target.removeEventListener('pointermove', track )   
                   if (options.release) {
                      options.release(e)  
-                  }
-                  //onePointerIsDown = false;
+                  } 
                }     
-
-                
-                  lastPtrUp = !!lastPtrUp ? lastPtrUp : null
-                  
-                  if (options.start) {
-                     options.start(event) 
-                  }
-                  
-                  ;['pointerup','pointercancel', 'contextmenu'].forEach(type => target.addEventListener(type, release))  
-                  target.addEventListener('pointermove', track) 
-            
+ 
+               lastPtrUp = !!lastPtrUp ? lastPtrUp : null
                
+               if (options.start) {
+                  options.start(event) 
+               }
+               
+               ;['pointerup','pointercancel', 'contextmenu'].forEach(type => target.addEventListener(type, release))  
+               target.addEventListener('pointermove', track)  
             }
 
          })()
 
          /////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-         function setImageUrl(url) {
-            let currUrl = readCssProp('--image-url')
-            if (!(typeof url==='string')){
-               url=URL.createObjectURL(url)
-            }
-            if (!url.startsWith('url(')){
-               url = 'url('+url+')'; 
-            }
-            setCssProp('--image-url', url); 
-            if (currUrl.startsWith('url(')) {
-               URL.revokeObjectURL(currUrl)
-            }
-            upl.classList.remove('selecting')
-            upl.classList.remove('url-input')
-         }
+         
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
          // saves some boilerplate for creating shadow DOM based custom elements
@@ -1228,33 +1229,7 @@
                this.styleText = styleStr;
                this.styleSheet.replaceSync(styleStr)
             }
-         }
-     
-
-         ////////////////////////////////////////////////////////////////////////////////////////////////////////
-         // same as above but for non shadowDOM custom elements
-         ////////////////////////////////////////////////////////////////////////////////////////////////////////
-      
-
-         class SimpleComponent extends HTMLElement {
-
-            static componentCount = 0;
-
-            constructor() {
-               super()           
-               SimpleComponent.componentCount+=1;
-            } 
-            get template() { 
-               return this.templateEl?.innerHTML
-            }
-            set template(templateStr) {
-               if (this.template == null) {
-                  this.templateEl = document.createElement('template')
-                  this.templateEl.innerHTML = templateStr;
-                  this.appendChild(this.templateEl.content.cloneNode(true))
-               }      
-            } 
-         }
+         } 
 
 
          ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1491,6 +1466,13 @@
                      transform: scale(1);
                   }
 
+                  label {
+                     display: inline-block;
+                     line-height: 0;
+                     margin-left: .3rem;
+                     cursor: pointer;
+                  }
+
                   svg.checkmark-graphic {
                      position: absolute; 
                      pointer-events: none;
@@ -1505,17 +1487,17 @@
                      stroke: currentcolor;
                   }`;
 
-               this.template = `<input type="checkbox" name="fancy-checkbox-input"/>
+               this.label = this.getAttribute('label');
+               this.template = `<input id="${this.label}_checkbox" title="fancy-checkbox-for-${this.label}" type="checkbox" />
                   <svg class="checkmark-graphic" viewBox="0 0 32 32">
                      <path d="M3 22c-1-1-.5-1.3 0-2l1-1c.5-.5 1.5-.5 2 0l5 4s1 1 2 0L26 2c.3-.5.5-.3 1 0l2 1c1 .5.5 1 0 2L14 30c-.5.5-1.5.5-2 0l-9-8Z"/>
-                  </svg>`;
+                  </svg><label for="${this.label}_checkbox">${this.label}</label>`;
             }
 
             connectedCallback() { 
                const detail = { toggle: this.hasAttribute('checked') }
                if (this.hasAttribute('checked')){
-                  this.shadowRoot.querySelector('input').checked = true;
-                  //this.removeAttribute('checked')
+                  this.shadowRoot.querySelector('input').checked = true; 
                }
                this.event = new CustomEvent('toggle-check', { detail, bubbles: true, composed: true })
                this.shadowRoot.querySelector('input').addEventListener('click', e=> { 
@@ -1615,7 +1597,7 @@
                         }  
 
                         .tri::before {
-                          
+
                            z-index:-1;
                            content: "";
                            position: absolute;  
@@ -2096,7 +2078,7 @@
 
                      this.fileInputEl.addEventListener('change', async e => { 
                         const file = this.fileInputEl.files[0]
-                        if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(1))) { 
+                        if (isValidImageFile(file)) { 
                            setImageUrl(file); 
                         }
                      })                     
@@ -2116,12 +2098,8 @@
                      this.shadowRoot.querySelector('#url-input-submit').addEventListener('click',  e=> {  
                        this.submitUrl(this.urlInputEl.value);
                      }) 
-                     
-                     
-                     this.addEventListener('dragover', e=> { 
-                        e.preventDefault()
-                     })
-
+                      
+                     this.addEventListener('dragover', e=> e.preventDefault()) 
                      this.addEventListener('dragenter', e=> {
                          e.preventDefault() 
                         this.classList.add('drag-ready')  
@@ -2129,19 +2107,11 @@
                       this.addEventListener('dragleave', e=> {
                          e.preventDefault() 
                         this.classList.remove('drag-ready')  
-                     }) 
-
+                     })  
                      this.addEventListener('drop', e=> {   
                         e.preventDefault();    
-                        [...e.dataTransfer.items] 
-                           .filter( x => x.kind === 'file')
-                           .forEach( async blob => {   
-                              const file = await blob.getAsFile()                                
-                              if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))) { 
-                                 setImageUrl(file)                     
-                              }
-                              this.classList.remove('drag-ready')
-                           })  
+                        processImageDrop(e)
+                        this.classList.remove('drag-ready')
                      })  
                   }
                } 
@@ -2159,11 +2129,14 @@
             const SNAP_TOLERANCE = 80,
                   origWidth      = 300, 
                   MINMAINWIDTH   = 210, 
-                  menuBtn = document.getElementById('menu-button'),
+                  menuBtn        = document.getElementById('menu-button'),
                   dashEl         = document.getElementById('dash'), 
                   innerDashEl    = document.getElementById('inner-dash'), 
+                  anVal          = document.getElementById('animate-value-display'),
+                  reflectVal     = document.getElementById('reflect-value-display'),
                   animLim        = { r: 3100, x: 3400, y: 2870, z: 100 },
                   incr           = { r: 0, x: 1, y: 0, z: 0 },
+                  clickHoldTime  = { start: 0, end: 0 },
                   TIME_INTERVALS = [
                      4000, 7000, 10000, 15000, 25000
                   ],
@@ -2175,8 +2148,8 @@
                   ];
 
             let dashMin, 
-                pollingRate = 15,
-                intervalId,
+                pollingRate = 17,
+                animIntervalId,
                 autoModeInterval, 
                 activeAnimations = [],
                 aniPause = false;
@@ -2217,14 +2190,13 @@
              
             function startImageMove(event) {
 
-               let shouldRestart = false; 
+               let shouldRestart = false,
+                   startingPos,
+                   changeFunc; 
 
-               const activeTool = document.body.getAttribute('active-tool')
-               const origClick   = [ Math.round(event.x), Math.round(event.y) ];
-
-               let startingPos, changeFunc;
-
-               const zoomFraction = 1 / (Number(readCssProp('--zoom-amount').replace('%','')) / 100);
+               const activeTool = document.body.getAttribute('active-tool'),
+                     origClick   = [ Math.round(event.x), Math.round(event.y) ],
+                     zoomFraction = 1 / (Number(readCssProp('--zoom-amount').replace('%','')) / 100);
 
                if (activeTool === 'move') { 
                   startingPos = readCssProp('--image-position').replace(/px/g,'').split(' ').map(Number);
@@ -2252,7 +2224,7 @@
                trackPointer(event,  {  
                   budgeThreshold: 0,  
                   start: evt =>{
-                     if (intervalId != null) {
+                     if (animIntervalId != null) {
                         stopAnimation()
                         shouldRestart = true;
                      } 
@@ -2296,8 +2268,7 @@
             function setDashWidth(amt) {
                dashEl.style.width = amt + 'px'
             } 
-
-            const anVal = document.getElementById('animate-value-display');
+ 
             function toggleAnimationProp(property) { 
                if (property==='rotate') {
                   property = 'r'
@@ -2312,11 +2283,10 @@
                }  
 
             }
-
-            //const zoomSlider = document.getElementById('zoom-input-slider');
+ 
     
-            function startAnimation(param) {   
-               if (intervalId == null) {  
+            function startAnimation() {   
+               if (animIntervalId == null) {  
                   const changeFunc = ()=> {  
                      const [x,y] = readCssProp('--image-position').replace(/px/g,'').split(' ').map(Number), 
                            pos   = { x, y, r: Number(readCssProp('--image-rotation').replace(/[^\-0-9\.]/g,''))}; 
@@ -2334,66 +2304,75 @@
                      if (incr.r !== 0) {
                         setCssProp('--image-rotation', 'rotate('+(Math.round((pos.r + incr.r)*10)/10) + 'deg)') 
                      } 
-                     intervalId = setTimeout(changeFunc, pollingRate);   
+                     animIntervalId = setTimeout(changeFunc, pollingRate);   
                   }  
-                  intervalId = setTimeout(changeFunc, pollingRate);  
-                  //intervalId = setInterval(changeFunc, pollingRate)
+                  animIntervalId = setTimeout(changeFunc, pollingRate);   
                } 
             }
 
-            function stopAnimation(param) { 
-               clearInterval(intervalId);
-               intervalId = null; 
+            function stopAnimation() { 
+               clearTimeout(animIntervalId);
+               animIntervalId = null; 
             } 
-            
-            const enableAutoMode = (()=> {
-               
-               const getRandInterval = (arr)=> arr[arr.length * Math.random() | 0];
 
-               return function() {
- 
-                  document.querySelector('.animate-properties-group').classList.add('automode-enabled');
-                  ['animate-x-toggle','animate-y-toggle','animate-rotate-toggle'].forEach(id=>{
-                     document.getElementById(id).setAttribute('disabled','')
-                  });
-                  const change = ()=> { 
-                     const randVal = Math.round(Math.random()*2)
-                     switch(activeAnimations.length) {
-                        case 0:
-                           toggleAnimationProp(getRandInterval(ANIM_SELECT_PROBABILITIES))
-                           break;
-                        case 1:  
-                           let toAddFrom = ANIM_SELECT_PROBABILITIES.filter(item=> item !== activeAnimations[0])
-                           if (randVal===0){ 
-                              toggleAnimationProp(getRandInterval(toAddFrom))
-                           } else if (randVal===1) {
-                              let curr = activeAnimations[0]; 
-                              toggleAnimationProp(getRandInterval(toAddFrom))
-                              toggleAnimationProp(curr)
-                           } 
-                           break;
-                        case 2:  
-                           if (randVal===0) {
-                              toggleAnimationProp(activeAnimations.includes('r') ? 'r': getRandInterval(activeAnimations))
-                           } else if (randVal===1) {
-                              let toAddFrom = ANIM_SELECT_PROBABILITIES.filter(item=> !activeAnimations.includes(item))
-                              toggleAnimationProp(getRandInterval(toAddFrom))
-                           } 
-                           break;
-                        case 3: 
-                           if (randVal!==3){
-                              toggleAnimationProp(activeAnimations.includes('r') ? 'r': getRandInterval(activeAnimations))    
-                           }              
-                           break;
-                     }
-                     autoModeInterval = setTimeout(change,  getRandInterval(TIME_INTERVALS))
-                  } 
-                  if (autoModeInterval==null){
-                     change()
-                  }
+            function pauseAnimation() {
+               if (animIntervalId != null){
+                  stopAnimation() 
+                  aniPause = true
                }
-            })()
+            }
 
+            function restartAnimation(){ 
+               if (aniPause == true) startAnimation() 
+            }
+
+            const getRandInterval = (arr)=> arr[arr.length * Math.random() | 0];
+
+            function autoModeChange() {
+           
+               const randVal = Math.round(Math.random()*2);
+
+               switch(activeAnimations.length) {
+                  case 0:
+                     toggleAnimationProp(getRandInterval(ANIM_SELECT_PROBABILITIES))
+                     break;
+                  case 1:  
+                     let toAddFrom = ANIM_SELECT_PROBABILITIES.filter(item=> item !== activeAnimations[0])
+                     if (randVal===0){ 
+                        toggleAnimationProp(getRandInterval(toAddFrom))
+                     } else if (randVal===1) {
+                        let curr = activeAnimations[0]; 
+                        toggleAnimationProp(getRandInterval(toAddFrom))
+                        toggleAnimationProp(curr)
+                     } 
+                     break;
+                  case 2:  
+                     if (randVal===0) {
+                        toggleAnimationProp(activeAnimations.includes('r') ? 'r': getRandInterval(activeAnimations))
+                     } else if (randVal===1) {
+                        let toAddFrom = ANIM_SELECT_PROBABILITIES.filter(item=> !activeAnimations.includes(item))
+                        toggleAnimationProp(getRandInterval(toAddFrom))
+                     } 
+                     break;
+                  case 3: 
+                     if (randVal!==3){
+                        toggleAnimationProp(activeAnimations.includes('r') ? 'r': getRandInterval(activeAnimations))    
+                     }              
+                     break;
+               }
+               autoModeInterval = setTimeout(autoModeChange,  getRandInterval(TIME_INTERVALS)) 
+            }
+            
+            function enableAutoMode(){
+               document.querySelector('.animate-properties-group').classList.add('automode-enabled');
+               ['animate-x-toggle','animate-y-toggle','animate-rotate-toggle'].forEach(id=>{
+                  document.getElementById(id).setAttribute('disabled','')
+               });               
+               if (autoModeInterval==null){
+                  autoModeChange()
+               }
+            }
+                
             function disableAutoMode() {
                let checkedAnims = []; 
                document.querySelector('.animate-properties-group').classList.remove('automode-enabled');
@@ -2418,16 +2397,16 @@
                   document.body.setAttribute('active-tool', tool) 
                }
             }
+
             
-            let eStart = 0;
-            let eEnd = 0;
             
+
             menuBtn.addEventListener('pointerdown', e=> {
-               eStart = new Date()
+               clickHoldTime.start = new Date()
             }) 
             menuBtn.addEventListener('pointerup', e=> {
-               eEnd = new Date();
-               const delta = (eEnd - eStart) / 1000.0; 
+               clickHoldTime.end = new Date();
+               const delta = (clickHoldTime.end - clickHoldTime.start) / 1000.0; 
                if (delta > 2) {
                   e.preventDefault()
                   menuBtn.classList.add('hidden')
@@ -2441,27 +2420,15 @@
                if (e.target.tagName === 'DIV') { startDashMove(e) }
             }) 
 
-            document.getElementById('main').addEventListener('pointerdown', e=> {
-               startImageMove(e)
-            })    
-
-            document.getElementById('main').addEventListener('dragenter', e=> {
-               e.preventDefault()
-            }) 
+            document.getElementById('main').addEventListener('pointerdown', e=> startImageMove(e))     
+            document.getElementById('main').addEventListener('dragenter', e=> e.preventDefault()) 
             document.getElementById('main').addEventListener('dragover', e=> e.preventDefault())
             document.getElementById('main').addEventListener('drop', e=> {   
                e.preventDefault();    
-               [...e.dataTransfer.items] 
-                  .filter( x => x.kind === 'file')
-                  .forEach( async blob => {   
-                     const file = await blob.getAsFile()                                
-                     if (IMG_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))) { 
-                        setImageUrl(file) 
-                     }
-                  })  
+               processImageDrop(e)
             }) 
 
-            const reflectVal = document.getElementById('reflect-value-display');
+  
             const updateReflect = ()=>{
                for(let inp of [...document.querySelectorAll('#mirror-radio-select input')]){
                   if (inp.checked){
@@ -2469,10 +2436,7 @@
                      break;
                   }
                }
-            }
-
-            
-            
+            } 
             
             document.getElementById('mirror-radio-select').addEventListener('click', e=> {
                let val = Number(e.originalTarget?.value ?? e.target.value)
@@ -2591,18 +2555,7 @@
             })
             
 
-            function pauseAnimation() {
-               if (intervalId!=null){
-                  stopAnimation()
-                  document.body.classList.add('no-transitions')
-                  aniPause = true
-               }
-            }
-
-            function restartAnimation(){
-               document.body.classList.remove('no-transitions')
-               if (aniPause == true) { startAnimation() }
-            }
+            
 
 
             const valDisplays = ((dict = {})=>{
@@ -2621,7 +2574,7 @@
                slider.addEventListener('range-change', ((timeoutId)=>
                   (e) => { 
                      if (e.detail.from === 'input' ) {
-                        if (intervalId != null) pauseAnimation()
+                        if (animIntervalId != null) pauseAnimation()
                         clearTimeout(timeoutId);
                         timeoutId = setTimeout(restartAnimation, 500); 
                      }    
